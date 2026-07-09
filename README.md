@@ -1,40 +1,42 @@
-# Provincial Project Alignment Dashboard (PPAD)
+# nan-development
 
-ระบบ Dashboard สำหรับวิเคราะห์ความสอดคล้องของโครงการกับแผนพัฒนาจังหวัดน่านและ SDGs
+ระบบ Dashboard สำหรับติดตามความสอดคล้องของโครงการจังหวัดน่านกับแผนพัฒนาจังหวัดและ SDGs
 
-## วิธีใช้งานบน GitHub Pages
+## คุณสมบัติ
+
+- Dashboard ภาพรวมโครงการ
+- แบ่งกลุ่ม: สังคม, ท่องเที่ยว, ทรัพยากร, การค้า, เกษตร
+- แสดงงบประมาณพร้อมร้อยละของงบรวม
+- วิเคราะห์ SDGs ที่เกี่ยวข้อง
+- ค้นหาและกรองข้อมูล
+- หน้ารายละเอียดโครงการ
+- Export PDF ด้วยคำสั่งพิมพ์ของ Browser
+- Export Excel เป็นไฟล์ `.xls`
+- รองรับ Export PDF และ Export Excel ตามข้อกำหนด
+
+## วิธีอัปโหลดขึ้น GitHub Pages
 
 1. แตกไฟล์ ZIP นี้
-2. อัปโหลดไฟล์ทั้งหมดขึ้น GitHub Repository
-3. ไปที่ Settings > Pages
-4. เลือก Deploy from branch
-5. เลือก branch `main` และ folder `/root`
+2. สร้าง Repository ชื่อ `nan-development`
+3. อัปโหลดไฟล์ทั้งหมดขึ้น Repository
+4. ไปที่ Settings > Pages
+5. เลือก Branch: `main` และ Folder: `/root`
 6. กด Save
 7. เปิด URL ที่ GitHub Pages สร้างให้
 
+## ข้อมูลที่ใช้
+
+- จำนวนโครงการ: 112 โครงการ
+- งบประมาณรวม: 1,067,920,919 บาท
+- แหล่งข้อมูล: Excel ที่ผู้ใช้อัปโหลดในระบบ ChatGPT
+
 ## ไฟล์สำคัญ
 
-- `index.html` หน้าเว็บหลัก
-- `assets/style.css` รูปแบบหน้าจอ
-- `assets/app.js` ระบบค้นหา กรอง Dashboard และ Export
-- `data/projects.json` ข้อมูลโครงการจาก Excel
-- `data/sdgs.json` รายการ SDGs
-- `data/province-plan.json` ข้อมูลแผนจังหวัดจาก Sheet แผนปี 71-75
-
-## การอัปเดตข้อมูล
-
-แก้ไขไฟล์ `data/projects.json` หรือแปลง Excel ใหม่ให้เป็น JSON แล้วแทนที่ไฟล์เดิม จากนั้น commit/push ขึ้น GitHub
-
-## หมายเหตุ
-
-เวอร์ชันนี้เป็น Static Dashboard ใช้งานได้ทันทีบน GitHub Pages โดยไม่ต้องติดตั้ง Node.js และไม่ต้องมี Database
-
-
-## การแสดงงบประมาณเป็นร้อยละ (%)
-
-Dashboard รุ่นนี้แสดงงบประมาณทั้งจำนวนเงินและร้อยละ โดยคำนวณจากงบประมาณรวมทั้งหมดของชุดข้อมูล เช่น งบประมาณรายโครงการ งบประมาณตามกลุ่ม และงบประมาณตามระดับความสอดคล้อง
-
-- ตารางรายโครงการ: แสดงงบประมาณและ % ของงบรวม
-- กราฟงบประมาณตามกลุ่ม: แสดงจำนวนเงินและ %
-- กราฟงบประมาณตามระดับความสอดคล้อง: แสดงจำนวนเงินและ %
-- Export CSV/JSON: มีฟิลด์ `budgetPercentOfTotal`
+- `index.html` หน้า Dashboard หลัก
+- `assets/style.css` ไฟล์ตกแต่งหน้าเว็บ
+- `assets/app.js` ไฟล์ควบคุม Dashboard
+- `data/projects.json` ข้อมูลโครงการ
+- `data/summary.json` ข้อมูลสรุป
+- `data/sdgs.json` รายชื่อ SDGs
+- `assets/logo-aiat.jpg` โลโก้ AIAT
+- `assets/logo-rmutl.png` โลโก้ RMUTL
