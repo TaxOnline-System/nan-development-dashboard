@@ -16,12 +16,12 @@
     <div class="brand">
       <div class="brand-kicker">Nan Province</div>
       <h1>nan-development</h1>
-      <p>ระบบติดตามและวิเคราะห์ความสอดคล้องโครงการกับแผนพัฒนาจังหวัดและ SDGs</p>
+      <p>ระบบสำหรับเจ้าของโครงการตรวจสอบความสอดคล้องกับแผนพัฒนาจังหวัด ตัวชี้วัด แผนงานหลัก และ SDGs</p>
     </div>
     <nav class="nav" id="categoryNav"></nav>
     <div class="sidebar-footer">
-      <strong>GitHub Pages Ready</strong>
-      <span>Export: PDF / Excel เท่านั้น</span>
+      <strong>Owner Review Dashboard</strong>
+      <span>ใช้ตรวจสอบข้อมูลและปรับแก้โครงการก่อนเสนอแผน</span>
     </div>
   </aside>
 
@@ -30,23 +30,27 @@
       <div>
         <p class="eyebrow">Provincial Project Alignment Dashboard</p>
         <h2>ระบบติดตามความสอดคล้องโครงการกับแผนพัฒนาจังหวัดและ SDGs</h2>
-        <p class="subtitle">สำหรับเจ้าของโครงการตรวจสอบข้อมูล งบประมาณ ร้อยละงบประมาณ SDGs ระดับความสอดคล้อง และข้อเสนอแนะเพื่อปรับปรุงโครงการ</p>
+        <p class="subtitle">สำหรับเจ้าของโครงการตรวจสอบข้อมูล แผนงานหลัก ตัวชี้วัด SDGs เกณฑ์ประเมิน และข้อเสนอแนะเพื่อนำไปปรับแก้ให้สอดคล้องกับแผนพัฒนาจังหวัด</p>
       </div>
-      <div class="actions">
-        <button id="printBtn" class="btn secondary">Export PDF</button>
-        <button id="excelBtn" class="btn primary">Export Excel</button>
-      </div>
+      <div class="status-badge">โหมดตรวจสอบข้อมูล • เน้นดูและปรับแก้ข้อมูล</div>
     </header>
 
+    <section class="owner-guide">
+      <article><strong>1. ตรวจสอบแผนงานหลัก</strong><span>ดูว่าโครงการเชื่อมกับประเด็นการพัฒนา แนวทางการพัฒนา และแผนงานหลักชัดเจนหรือไม่</span></article>
+      <article><strong>2. ตรวจสอบตัวชี้วัด</strong><span>ดูว่ามี KPI ค่าเป้าหมาย หน่วยนับ และผู้ได้รับประโยชน์ที่วัดผลได้หรือไม่</span></article>
+      <article><strong>3. ตรวจสอบ SDGs</strong><span>ดู SDGs ที่ระบบจับได้ และเพิ่ม Keyword/Outcome ให้รองรับ SDGs ที่เกี่ยวข้อง</span></article>
+      <article><strong>4. นำข้อเสนอแนะไปแก้ไข</strong><span>เปิดรายละเอียดโครงการแล้วใช้หัวข้อ “สิ่งที่ควรปรับแก้” เป็นแนวทางแก้เอกสาร</span></article>
+    </section>
+
     <section class="kpi-grid">
-      <article class="kpi card-blue"><span>จำนวนโครงการ</span><strong id="totalProjects">0</strong><small>รายการทั้งหมดในระบบ</small></article>
-      <article class="kpi card-gold"><span>งบประมาณรวม</span><strong id="totalBudget">0</strong><small>บาท • 100%</small></article>
-      <article class="kpi card-green"><span>ระดับสูงมาก/สูง</span><strong id="highCount">0</strong><small>โครงการที่มีความสอดคล้องดี</small></article>
-      <article class="kpi card-red"><span>ควรปรับปรุง</span><strong id="improveCount">0</strong><small>โครงการระดับปานกลาง/ต่ำ</small></article>
+      <article class="kpi card-blue"><span>จำนวนโครงการ</span><strong id="totalProjects">0</strong><small>รายการที่แสดงตามตัวกรอง</small></article>
+      <article class="kpi card-gold"><span>งบประมาณรวม</span><strong id="totalBudget">0</strong><small>คิดเป็น 100% ของรายการที่แสดง</small></article>
+      <article class="kpi card-green"><span>สอดคล้องสูง</span><strong id="highCount">0</strong><small>ระดับสูงมาก/สูง</small></article>
+      <article class="kpi card-red"><span>ต้องปรับแก้</span><strong id="improveCount">0</strong><small>ระดับปานกลาง/ต่ำ/ไม่ระบุ</small></article>
     </section>
 
     <section class="filter-panel">
-      <input id="searchInput" type="search" placeholder="ค้นหาชื่อโครงการ / หน่วยงาน / Keyword / SDG" />
+      <input id="searchInput" type="search" placeholder="ค้นหาชื่อโครงการ / หน่วยงาน / แผนงาน / ตัวชี้วัด / Keyword / SDG" />
       <select id="categoryFilter"><option value="all">ทุกกลุ่ม</option></select>
       <select id="alignmentFilter"><option value="all">ทุกระดับความสอดคล้อง</option></select>
       <select id="sdgFilter"><option value="all">ทุก SDGs</option></select>
@@ -55,16 +59,21 @@
 
     <section class="chart-grid two">
       <article class="panel"><div class="panel-head"><h3>จำนวนโครงการตามกลุ่ม</h3><span id="categoryTotal"></span></div><div id="categoryChart" class="bar-list"></div></article>
-      <article class="panel"><div class="panel-head"><h3>งบประมาณตามกลุ่ม (%)</h3><span>คิดจากงบรวม</span></div><div id="budgetChart" class="bar-list"></div></article>
+      <article class="panel"><div class="panel-head"><h3>งบประมาณตามกลุ่ม (%)</h3><span>คิดจากงบรวมของรายการที่แสดง</span></div><div id="budgetChart" class="bar-list"></div></article>
       <article class="panel"><div class="panel-head"><h3>จำนวนโครงการตามระดับความสอดคล้อง</h3><span id="alignmentTotal"></span></div><div id="alignmentChart" class="bar-list"></div></article>
-      <article class="panel"><div class="panel-head"><h3>งบประมาณตามระดับความสอดคล้อง (%)</h3><span>คิดจากงบรวม</span></div><div id="alignmentBudgetChart" class="bar-list"></div></article>
+      <article class="panel"><div class="panel-head"><h3>งบประมาณตามระดับความสอดคล้อง (%)</h3><span>ชี้ว่าทรัพยากรถูกใช้กับโครงการระดับใด</span></div><div id="alignmentBudgetChart" class="bar-list"></div></article>
+    </section>
+
+    <section class="panel insight-panel">
+      <div class="panel-head"><h3>ภาพรวมสำหรับการปรับแก้โครงการ</h3><span>สรุปจากรายการที่แสดง</span></div>
+      <div id="insightCards" class="insight-grid"></div>
     </section>
 
     <section class="panel"><div class="panel-head"><h3>SDGs ที่พบในโครงการ</h3><span id="sdgSummary"></span></div><div id="sdgChart" class="sdg-grid"></div></section>
 
     <section class="panel table-panel">
-      <div class="panel-head"><h3>รายการโครงการ</h3><span id="resultCount"></span></div>
-      <div class="table-wrap"><table id="projectTable"><thead><tr><th>กลุ่ม</th><th>ชื่อโครงการ</th><th>หน่วยงาน</th><th class="num">งบประมาณ</th><th class="num">% งบรวม</th><th>SDGs</th><th>ระดับ</th><th>รายละเอียด</th></tr></thead><tbody></tbody></table></div>
+      <div class="panel-head"><h3>รายการโครงการสำหรับเจ้าของโครงการตรวจสอบ</h3><span id="resultCount"></span></div>
+      <div class="table-wrap"><table id="projectTable"><thead><tr><th>กลุ่ม</th><th>ชื่อโครงการ</th><th>แผนงานหลัก / ตัวชี้วัดที่ต้องเชื่อมโยง</th><th class="num">งบประมาณ</th><th class="num">% งบรวม</th><th>SDGs</th><th>ระดับ</th><th>ข้อเสนอแนะย่อ</th><th>ตรวจสอบ</th></tr></thead><tbody></tbody></table></div>
     </section>
   </main>
 
