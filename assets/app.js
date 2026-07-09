@@ -1,8 +1,13 @@
 let projects=[], sdgs=[], filtered=[], currentCategory='all';
 const categoryOrder=['all','สังคม','ท่องเที่ยว','ทรัพยากร','การค้า','เกษตร'];
 const fmtNum=n=>Number(n||0).toLocaleString('th-TH');
-const fmtBudget=n=>{n=Number(n||0); if(n>=1e9)return (n/1e9).toFixed(2)+' พันล้าน'; if(n>=1e6)return (n/1e6).toFixed(2)+' ล้าน'; return fmtNum(n)};
+const fmtPct=n=>(Number(n||0)).toFixed(2)+'%';
+const fmtBudget=n=>{n=Number(n||0); if(n>=1e9)return (n/1e9).toFixed(2)+' พันล้าน'; if(n>=1e6)return (n/1e6).toFixed(2)+' ล้าน'; return fmtNum(n)+' บาท'};
 const qs=id=>document.getElementById(id);
+const totalAllBudget=()=>projects.reduce((s,p)=>s+(Number(p.budget)||0),0);
+const totalFilteredBudget=()=>filtered.reduce((s,p)=>s+(Number(p.budget)||0),0);
+const budgetPctOfAll=p=>totalAllBudget()?((Number(p.budget)||0)/totalAllBudget()*100):0;
+const budgetLabel=p=>`${escapeHtml(p.budgetText||fmtBudget(p.budget))}<br><span class="budget-pct">${fmtPct(budgetPctOfAll(p))} ของงบประมาณรวม</span>`;
 async function init(){
   const [p,s]=await Promise.all([fetch('data/projects.json').then(r=>r.json()),fetch('data/sdgs.json').then(r=>r.json())]);
   projects=p; sdgs=s; setupControls(); applyFilters();
@@ -28,32 +33,43 @@ function applyFilters(){
 }
 function updateNav(){[...qs('categoryNav').children].forEach(b=>b.classList.toggle('active',(b.textContent==='ภาพรวมทั้งหมด'?'all':b.textContent)===currentCategory));}
 function renderSummary(){
+  const allBudget=totalAllBudget(); const fBudget=totalFilteredBudget();
   qs('totalProjects').textContent=fmtNum(filtered.length);
-  qs('totalBudget').textContent=fmtBudget(filtered.reduce((s,p)=>s+(p.budget||0),0));
+  qs('totalBudget').textContent=fmtBudget(fBudget);
+  qs('budgetPercent').textContent=`คิดเป็น ${fmtPct(allBudget?fBudget/allBudget*100:0)} ของงบประมาณรวมทั้งหมด`;
   const high=filtered.filter(p=>['สูงมาก','สูง'].includes(p.alignment)).length; qs('highCount').textContent=fmtNum(high);
   qs('improveCount').textContent=fmtNum(filtered.filter(p=>!['สูงมาก','สูง'].includes(p.alignment)).length);
-  qs('resultCount').textContent=`พบ ${fmtNum(filtered.length)} รายการ`;
+  qs('resultCount').textContent=`พบ ${fmtNum(filtered.length)} รายการ • งบประมาณ ${fmtBudget(fBudget)} (${fmtPct(allBudget?fBudget/allBudget*100:0)})`;
 }
 function countBy(arr,keyFn){return arr.reduce((o,x)=>{const k=keyFn(x)||'ไม่ระบุ';o[k]=(o[k]||0)+1;return o;},{});} 
-function renderBar(elId,data){
+function sumBy(arr,keyFn,valFn){return arr.reduce((o,x)=>{const k=keyFn(x)||'ไม่ระบุ';o[k]=(o[k]||0)+(Number(valFn(x))||0);return o;},{});} 
+function renderBar(elId,data,options={}){
   const el=qs(elId); const entries=Object.entries(data).sort((a,b)=>b[1]-a[1]); const max=Math.max(1,...entries.map(e=>e[1]));
-  el.innerHTML=entries.map(([k,v])=>`<div class="bar-row"><div class="bar-label" title="${escapeHtml(k)}">${escapeHtml(k)}</div><div class="bar-track"><div class="bar-fill" style="width:${(v/max)*100}%"></div></div><div class="bar-value">${v}</div></div>`).join('')||'<p>ไม่พบข้อมูล</p>';
+  const total=options.total ?? entries.reduce((s,e)=>s+Number(e[1]||0),0);
+  el.innerHTML=entries.map(([k,v])=>{
+    const pct=total?Number(v)/total*100:0;
+    const val=options.type==='budget'?`${fmtBudget(v)} <span>${fmtPct(pct)}</span>`:`${fmtNum(v)} <span>${fmtPct(pct)}</span>`;
+    return `<div class="bar-row ${options.type==='budget'?'budget-row':''}"><div class="bar-label" title="${escapeHtml(k)}">${escapeHtml(k)}</div><div class="bar-track"><div class="bar-fill" style="width:${(v/max)*100}%"></div></div><div class="bar-value">${val}</div></div>`;
+  }).join('')||'<p>ไม่พบข้อมูล</p>';
 }
 function renderCharts(){
-  renderBar('categoryChart', countBy(filtered,p=>p.category)); renderBar('alignmentChart', countBy(filtered,p=>p.alignment));
+  renderBar('categoryChart', countBy(filtered,p=>p.category)); 
+  renderBar('alignmentChart', countBy(filtered,p=>p.alignment));
+  renderBar('categoryBudgetChart', sumBy(filtered,p=>p.category,p=>p.budget), {type:'budget', total: totalFilteredBudget()});
+  renderBar('alignmentBudgetChart', sumBy(filtered,p=>p.alignment,p=>p.budget), {type:'budget', total: totalFilteredBudget()});
   const counts={}; filtered.forEach(p=>(p.sdgs||[]).forEach(s=>counts[s]=(counts[s]||0)+1));
   const active=sdgs.filter(s=>counts[s.id]); qs('sdgSummary').textContent=`พบ ${active.length} SDGs`;
   qs('sdgChart').innerHTML=active.sort((a,b)=>a.id-b.id).map(s=>`<div class="sdg-card"><strong>SDG ${s.id}</strong><span>${escapeHtml(s.goal)}</span><div class="badge">${counts[s.id]} โครงการ</div></div>`).join('')||'<p>ไม่พบ SDGs</p>';
 }
 function renderTable(){
   const tbody=qs('projectTable').querySelector('tbody');
-  tbody.innerHTML=filtered.map((p,i)=>`<tr><td><span class="badge">${escapeHtml(p.category)}</span></td><td class="project-name">${escapeHtml(p.projectName)}</td><td>${escapeHtml(p.agency)}</td><td>${escapeHtml(p.budgetText||fmtBudget(p.budget))}</td><td>${(p.sdgs||[]).map(s=>`<span class="badge">SDG ${s}</span>`).join('')}</td><td><span class="badge align-${escapeHtml(p.alignment)}">${escapeHtml(p.alignment)}</span></td><td><button onclick="showDetail('${p.id}')">เปิดดู</button></td></tr>`).join('');
+  tbody.innerHTML=filtered.map((p,i)=>`<tr><td><span class="badge">${escapeHtml(p.category)}</span></td><td class="project-name">${escapeHtml(p.projectName)}</td><td>${escapeHtml(p.agency)}</td><td>${budgetLabel(p)}</td><td>${(p.sdgs||[]).map(s=>`<span class="badge">SDG ${s}</span>`).join('')}</td><td><span class="badge align-${escapeHtml(p.alignment)}">${escapeHtml(p.alignment)}</span></td><td><button onclick="showDetail('${p.id}')">เปิดดู</button></td></tr>`).join('');
 }
 function showDetail(id){
   const p=projects.find(x=>x.id===id); if(!p)return; qs('detailTitle').textContent=p.projectName;
   const sdgBadges=(p.sdgs||[]).map(s=>`<span class="badge">SDG ${s}</span>`).join(' ');
   qs('detailBody').innerHTML=`<div class="detail-grid">
-    ${box('กลุ่ม / หน่วยงาน',`${p.category}\n${p.agency}`)}${box('งบประมาณ',p.budgetText||fmtBudget(p.budget))}
+    ${box('กลุ่ม / หน่วยงาน',`${p.category}\n${p.agency}`)}${box('งบประมาณ',`${p.budgetText||fmtBudget(p.budget)}\nคิดเป็น ${fmtPct(budgetPctOfAll(p))} ของงบประมาณรวมทั้งหมด`)}
     ${box('ประเด็นการพัฒนา',p.developmentIssue,true)}${box('แนวทางการพัฒนา',p.developmentApproach,true)}
     ${box('แผนงาน',p.plan,true)}${box('ตัวชี้วัดและค่าเป้าหมาย',p.indicator,true)}
     ${box('ผลผลิต (Output)',p.output,true)}${box('ผลลัพธ์ (Outcome)',p.outcome,true)}
@@ -67,10 +83,16 @@ function showDetail(id){
 function box(title,text,full=false,html=false,extra=''){return `<div class="detail-box ${full?'full':''} ${extra}"><h4>${escapeHtml(title)}</h4>${html?text:escapeHtml(text||'ไม่พบข้อมูล')}</div>`}
 function escapeHtml(x){return String(x||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
 function exportCSV(){
-  const header=['id','category','projectName','agency','budgetText','sdgs','alignment','suggestion'];
-  const rows=[header.join(',')].concat(filtered.map(p=>header.map(h=>`"${String(Array.isArray(p[h])?p[h].join('|'):p[h]||'').replace(/"/g,'""')}"`).join(',')));
+  const header=['id','category','projectName','agency','budgetText','budget','budgetPercentOfTotal','sdgs','alignment','suggestion'];
+  const rows=[header.join(',')].concat(filtered.map(p=>header.map(h=>{
+    const value=h==='budgetPercentOfTotal'?fmtPct(budgetPctOfAll(p)):Array.isArray(p[h])?p[h].join('|'):p[h]||'';
+    return `"${String(value).replace(/"/g,'""')}"`;
+  }).join(',')));
   download('ppad-projects.csv',rows.join('\n'),'text/csv;charset=utf-8;');
 }
-function exportJSON(){download('ppad-projects.json',JSON.stringify(filtered,null,2),'application/json;charset=utf-8;');}
+function exportJSON(){
+  const data=filtered.map(p=>({...p,budgetPercentOfTotal:Number(budgetPctOfAll(p).toFixed(4))}));
+  download('ppad-projects.json',JSON.stringify(data,null,2),'application/json;charset=utf-8;');
+}
 function download(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();URL.revokeObjectURL(a.href);} 
 init();

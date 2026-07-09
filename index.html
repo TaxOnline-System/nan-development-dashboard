@@ -30,7 +30,7 @@
 
     <section class="cards">
       <div class="card"><span>จำนวนโครงการ</span><strong id="totalProjects">0</strong></div>
-      <div class="card"><span>งบประมาณรวม</span><strong id="totalBudget">0</strong><small>บาท</small></div>
+      <div class="card"><span>งบประมาณรวม</span><strong id="totalBudget">0</strong><small id="budgetPercent">คิดเป็น 0% ของงบประมาณรวมทั้งหมด</small></div>
       <div class="card"><span>ระดับสูงมาก/สูง</span><strong id="highCount">0</strong></div>
       <div class="card"><span>ต้องปรับปรุง</span><strong id="improveCount">0</strong></div>
     </section>
@@ -51,6 +51,17 @@
       <div class="panel">
         <div class="panel-head"><h3>จำนวนโครงการตามระดับความสอดคล้อง</h3></div>
         <div id="alignmentChart" class="bar-chart"></div>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <div class="panel">
+        <div class="panel-head"><h3>งบประมาณตามกลุ่ม</h3><span>แสดงจำนวนเงินและร้อยละ (%)</span></div>
+        <div id="categoryBudgetChart" class="bar-chart"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>งบประมาณตามระดับความสอดคล้อง</h3><span>แสดงจำนวนเงินและร้อยละ (%)</span></div>
+        <div id="alignmentBudgetChart" class="bar-chart"></div>
       </div>
     </section>
 
