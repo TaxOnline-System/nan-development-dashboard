@@ -1,76 +1,50 @@
-let projects=[], sdgs=[], filtered=[], currentCategory='all';
-const categoryOrder=['all','สังคม','ท่องเที่ยว','ทรัพยากร','การค้า','เกษตร'];
-const fmtNum=n=>Number(n||0).toLocaleString('th-TH');
-const fmtBudget=n=>{n=Number(n||0); if(n>=1e9)return (n/1e9).toFixed(2)+' พันล้าน'; if(n>=1e6)return (n/1e6).toFixed(2)+' ล้าน'; return fmtNum(n)};
-const qs=id=>document.getElementById(id);
-async function init(){
-  const [p,s]=await Promise.all([fetch('data/projects.json').then(r=>r.json()),fetch('data/sdgs.json').then(r=>r.json())]);
-  projects=p; sdgs=s; setupControls(); applyFilters();
+
+const state={projects:[],filtered:[],sdgs:[],activeCategory:'all'};
+const THB=new Intl.NumberFormat('th-TH',{maximumFractionDigits:0});
+const PCT=new Intl.NumberFormat('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+function fmtMoney(n){n=Number(n||0); if(n>=1e9)return `${PCT.format(n/1e9)} พันล้าน`; if(n>=1e6)return `${PCT.format(n/1e6)} ล้านบาท`; return `${THB.format(n)} บาท`;}
+function escapeHtml(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function levelClass(a){a=String(a||''); if(a.includes('สูง')) return 'level-high'; if(a.includes('ปานกลาง')) return 'level-mid'; if(a.includes('ต่ำ')) return 'level-low'; return 'level-mid';}
+function sdgPills(arr){return (arr&&arr.length?arr:[]).map(s=>`<span class="pill">SDG ${s}</span>`).join('') || '<span class="pill">ไม่ระบุ</span>';}
+function groupBy(list,key){return list.reduce((m,x)=>{const k=typeof key==='function'?key(x):x[key];m[k]=(m[k]||[]).concat(x);return m;},{});}
+function sum(list,fn){return list.reduce((a,x)=>a+Number(fn(x)||0),0)}
+async function load(){
+ const [projects,sdgs]=await Promise.all([fetch('data/projects.json').then(r=>r.json()),fetch('data/sdgs.json').then(r=>r.json())]);
+ state.projects=projects; state.sdgs=sdgs; state.filtered=projects; initFilters(); renderAll(); bind();
 }
-function setupControls(){
-  const cats=[...new Set(projects.map(p=>p.category))].sort((a,b)=>categoryOrder.indexOf(a)-categoryOrder.indexOf(b));
-  const nav=qs('categoryNav'); nav.innerHTML='';
-  ['all',...cats].forEach(c=>{const b=document.createElement('button');b.textContent=c==='all'?'ภาพรวมทั้งหมด':c;b.onclick=()=>{currentCategory=c;qs('categoryFilter').value=c;applyFilters();};nav.appendChild(b);});
-  cats.forEach(c=>qs('categoryFilter').append(new Option(c,c)));
-  [...new Set(projects.map(p=>p.alignment||'ไม่ระบุ'))].sort().forEach(a=>qs('alignmentFilter').append(new Option(a,a)));
-  sdgs.forEach(s=>qs('sdgFilter').append(new Option(`${s.code} ${s.goal}`,s.id)));
-  ['searchInput','categoryFilter','alignmentFilter','sdgFilter'].forEach(id=>qs(id).addEventListener('input',()=>{if(id==='categoryFilter')currentCategory=qs(id).value;applyFilters();}));
-  qs('resetBtn').onclick=()=>{currentCategory='all';qs('searchInput').value='';qs('categoryFilter').value='all';qs('alignmentFilter').value='all';qs('sdgFilter').value='all';applyFilters();};
-  qs('exportCsvBtn').onclick=exportCSV; qs('exportJsonBtn').onclick=exportJSON; qs('closeDialog').onclick=()=>qs('detailDialog').close();
+function initFilters(){
+ const cats=[...new Set(state.projects.map(p=>p.category||'ไม่ระบุ'))]; const order=['สังคม','ท่องเที่ยว','ทรัพยากร','การค้า','เกษตร']; cats.sort((a,b)=>(order.indexOf(a)<0?99:order.indexOf(a))-(order.indexOf(b)<0?99:order.indexOf(b)));
+ const nav=document.getElementById('categoryNav'); nav.innerHTML=`<button class="active" data-cat="all">ภาพรวมทั้งหมด</button>`+cats.map(c=>`<button data-cat="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join('');
+ const cf=document.getElementById('categoryFilter'); cats.forEach(c=>cf.insertAdjacentHTML('beforeend',`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`));
+ const aligns=[...new Set(state.projects.map(p=>p.alignment||'ไม่ระบุ'))].sort(); const af=document.getElementById('alignmentFilter'); aligns.forEach(a=>af.insertAdjacentHTML('beforeend',`<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`));
+ const sf=document.getElementById('sdgFilter'); state.sdgs.forEach(s=>sf.insertAdjacentHTML('beforeend',`<option value="${s.id}">SDG ${s.id} ${escapeHtml(s.goal)}</option>`));
+}
+function bind(){
+ ['searchInput','categoryFilter','alignmentFilter','sdgFilter'].forEach(id=>document.getElementById(id).addEventListener('input',applyFilters));
+ document.getElementById('resetBtn').onclick=()=>{document.getElementById('searchInput').value='';document.getElementById('categoryFilter').value='all';document.getElementById('alignmentFilter').value='all';document.getElementById('sdgFilter').value='all';state.activeCategory='all';document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.cat==='all'));applyFilters();};
+ document.getElementById('printBtn').onclick=()=>window.print();
+ document.getElementById('excelBtn').onclick=exportExcel;
+ document.getElementById('closeDialog').onclick=()=>document.getElementById('detailDialog').close();
+ document.getElementById('categoryNav').addEventListener('click',e=>{if(e.target.matches('button')){state.activeCategory=e.target.dataset.cat;document.getElementById('categoryFilter').value=state.activeCategory;document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b===e.target));applyFilters();}});
 }
 function applyFilters(){
-  const q=qs('searchInput').value.trim().toLowerCase(); const cat=qs('categoryFilter').value; const al=qs('alignmentFilter').value; const sdg=qs('sdgFilter').value;
-  filtered=projects.filter(p=>{
-    const text=[p.projectName,p.agency,p.sdgText,p.sdgKeyword,p.plan,p.assessment,p.suggestion].join(' ').toLowerCase();
-    return (!q||text.includes(q)) && (cat==='all'||p.category===cat) && (al==='all'||p.alignment===al) && (sdg==='all'||(p.sdgs||[]).includes(Number(sdg)));
-  });
-  updateNav(); renderSummary(); renderCharts(); renderTable();
+ const q=document.getElementById('searchInput').value.trim().toLowerCase(); const c=document.getElementById('categoryFilter').value; const a=document.getElementById('alignmentFilter').value; const s=document.getElementById('sdgFilter').value;
+ state.activeCategory=c;
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.cat===c));
+ state.filtered=state.projects.filter(p=>{
+  const text=[p.projectName,p.agency,p.category,p.plan,p.indicator,p.sdgText,p.sdgKeyword,p.assessment,p.suggestion].join(' ').toLowerCase();
+  return (!q||text.includes(q)) && (c==='all'||p.category===c) && (a==='all'||p.alignment===a) && (s==='all'||(p.sdgs||[]).map(String).includes(s));
+ }); renderAll();
 }
-function updateNav(){[...qs('categoryNav').children].forEach(b=>b.classList.toggle('active',(b.textContent==='ภาพรวมทั้งหมด'?'all':b.textContent)===currentCategory));}
-function renderSummary(){
-  qs('totalProjects').textContent=fmtNum(filtered.length);
-  qs('totalBudget').textContent=fmtBudget(filtered.reduce((s,p)=>s+(p.budget||0),0));
-  const high=filtered.filter(p=>['สูงมาก','สูง'].includes(p.alignment)).length; qs('highCount').textContent=fmtNum(high);
-  qs('improveCount').textContent=fmtNum(filtered.filter(p=>!['สูงมาก','สูง'].includes(p.alignment)).length);
-  qs('resultCount').textContent=`พบ ${fmtNum(filtered.length)} รายการ`;
-}
-function countBy(arr,keyFn){return arr.reduce((o,x)=>{const k=keyFn(x)||'ไม่ระบุ';o[k]=(o[k]||0)+1;return o;},{});} 
-function renderBar(elId,data){
-  const el=qs(elId); const entries=Object.entries(data).sort((a,b)=>b[1]-a[1]); const max=Math.max(1,...entries.map(e=>e[1]));
-  el.innerHTML=entries.map(([k,v])=>`<div class="bar-row"><div class="bar-label" title="${escapeHtml(k)}">${escapeHtml(k)}</div><div class="bar-track"><div class="bar-fill" style="width:${(v/max)*100}%"></div></div><div class="bar-value">${v}</div></div>`).join('')||'<p>ไม่พบข้อมูล</p>';
-}
-function renderCharts(){
-  renderBar('categoryChart', countBy(filtered,p=>p.category)); renderBar('alignmentChart', countBy(filtered,p=>p.alignment));
-  const counts={}; filtered.forEach(p=>(p.sdgs||[]).forEach(s=>counts[s]=(counts[s]||0)+1));
-  const active=sdgs.filter(s=>counts[s.id]); qs('sdgSummary').textContent=`พบ ${active.length} SDGs`;
-  qs('sdgChart').innerHTML=active.sort((a,b)=>a.id-b.id).map(s=>`<div class="sdg-card"><strong>SDG ${s.id}</strong><span>${escapeHtml(s.goal)}</span><div class="badge">${counts[s.id]} โครงการ</div></div>`).join('')||'<p>ไม่พบ SDGs</p>';
-}
-function renderTable(){
-  const tbody=qs('projectTable').querySelector('tbody');
-  tbody.innerHTML=filtered.map((p,i)=>`<tr><td><span class="badge">${escapeHtml(p.category)}</span></td><td class="project-name">${escapeHtml(p.projectName)}</td><td>${escapeHtml(p.agency)}</td><td>${escapeHtml(p.budgetText||fmtBudget(p.budget))}</td><td>${(p.sdgs||[]).map(s=>`<span class="badge">SDG ${s}</span>`).join('')}</td><td><span class="badge align-${escapeHtml(p.alignment)}">${escapeHtml(p.alignment)}</span></td><td><button onclick="showDetail('${p.id}')">เปิดดู</button></td></tr>`).join('');
-}
-function showDetail(id){
-  const p=projects.find(x=>x.id===id); if(!p)return; qs('detailTitle').textContent=p.projectName;
-  const sdgBadges=(p.sdgs||[]).map(s=>`<span class="badge">SDG ${s}</span>`).join(' ');
-  qs('detailBody').innerHTML=`<div class="detail-grid">
-    ${box('กลุ่ม / หน่วยงาน',`${p.category}\n${p.agency}`)}${box('งบประมาณ',p.budgetText||fmtBudget(p.budget))}
-    ${box('ประเด็นการพัฒนา',p.developmentIssue,true)}${box('แนวทางการพัฒนา',p.developmentApproach,true)}
-    ${box('แผนงาน',p.plan,true)}${box('ตัวชี้วัดและค่าเป้าหมาย',p.indicator,true)}
-    ${box('ผลผลิต (Output)',p.output,true)}${box('ผลลัพธ์ (Outcome)',p.outcome,true)}
-    ${box('SDGs ที่สอดคล้อง',`${sdgBadges}\n\n${escapeHtml(p.sdgText)}`,true,true)}
-    ${box('Keyword / เหตุผล SDGs',p.sdgKeyword,true)}
-    ${box('ระดับความสอดคล้อง',p.alignment)}${box('เกณฑ์ที่ใช้ประเมิน',p.criteria,true)}
-    ${box('ผลการประเมิน',p.assessment,true)}${box('ข้อเสนอแนะเพื่อเพิ่มความสอดคล้อง',p.suggestion||'ควรเพิ่ม Output, Outcome, KPI และค่าเป้าหมายที่วัดผลได้ให้ชัดเจน',true,true,'rec')}
-  </div>`;
-  qs('detailDialog').showModal();
-}
-function box(title,text,full=false,html=false,extra=''){return `<div class="detail-box ${full?'full':''} ${extra}"><h4>${escapeHtml(title)}</h4>${html?text:escapeHtml(text||'ไม่พบข้อมูล')}</div>`}
-function escapeHtml(x){return String(x||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
-function exportCSV(){
-  const header=['id','category','projectName','agency','budgetText','sdgs','alignment','suggestion'];
-  const rows=[header.join(',')].concat(filtered.map(p=>header.map(h=>`"${String(Array.isArray(p[h])?p[h].join('|'):p[h]||'').replace(/"/g,'""')}"`).join(',')));
-  download('ppad-projects.csv',rows.join('\n'),'text/csv;charset=utf-8;');
-}
-function exportJSON(){download('ppad-projects.json',JSON.stringify(filtered,null,2),'application/json;charset=utf-8;');}
-function download(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();URL.revokeObjectURL(a.href);} 
-init();
+function renderAll(){renderKpis();renderCharts();renderSdgs();renderTable();}
+function renderKpis(){const list=state.filtered;const total=sum(list,p=>p.budget);const high=list.filter(p=>String(p.alignment).includes('สูง')).length;const improve=list.filter(p=>String(p.alignment).includes('ปานกลาง')||String(p.alignment).includes('ต่ำ')).length;document.getElementById('totalProjects').textContent=THB.format(list.length);document.getElementById('totalBudget').textContent=fmtMoney(total);document.getElementById('highCount').textContent=THB.format(high);document.getElementById('improveCount').textContent=THB.format(improve);}
+function renderBar(elId,items,mode='count'){const el=document.getElementById(elId);if(!items.length){el.innerHTML='<div class="empty">ไม่พบข้อมูล</div>';return}const max=Math.max(...items.map(x=>x.value),1);el.innerHTML=items.map(x=>`<div class="bar-row"><div class="bar-label" title="${escapeHtml(x.label)}">${escapeHtml(x.label)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(3,x.value/max*100)}%"></div></div><div class="bar-value">${x.display}</div></div>`).join('');}
+function renderCharts(){const list=state.filtered;const totalBudget=sum(list,p=>p.budget);const byCat=Object.entries(groupBy(list,'category')).map(([label,arr])=>({label,value:arr.length,display:`${THB.format(arr.length)} โครงการ`})).sort((a,b)=>b.value-a.value);renderBar('categoryChart',byCat);document.getElementById('categoryTotal').textContent=`รวม ${THB.format(list.length)} โครงการ`;
+ const bCat=Object.entries(groupBy(list,'category')).map(([label,arr])=>{const v=sum(arr,p=>p.budget);return {label,value:v,display:`${fmtMoney(v)} • ${PCT.format(totalBudget?v/totalBudget*100:0)}%`}}).sort((a,b)=>b.value-a.value);renderBar('budgetChart',bCat);
+ const byAl=Object.entries(groupBy(list,'alignment')).map(([label,arr])=>({label,value:arr.length,display:`${THB.format(arr.length)} โครงการ`})).sort((a,b)=>b.value-a.value);renderBar('alignmentChart',byAl);document.getElementById('alignmentTotal').textContent=`รวม ${THB.format(list.length)} โครงการ`;
+ const bAl=Object.entries(groupBy(list,'alignment')).map(([label,arr])=>{const v=sum(arr,p=>p.budget);return {label,value:v,display:`${fmtMoney(v)} • ${PCT.format(totalBudget?v/totalBudget*100:0)}%`}}).sort((a,b)=>b.value-a.value);renderBar('alignmentBudgetChart',bAl);}
+function renderSdgs(){const counts={};const budgets={};state.filtered.forEach(p=>(p.sdgs||[]).forEach(s=>{counts[s]=(counts[s]||0)+1;budgets[s]=(budgets[s]||0)+Number(p.budget||0)}));const total=sum(state.filtered,p=>p.budget);document.getElementById('sdgSummary').textContent=`พบ ${Object.keys(counts).length} SDGs`;document.getElementById('sdgChart').innerHTML=state.sdgs.map(s=>{const c=counts[s.id]||0;const b=budgets[s.id]||0;return `<div class="sdg-card ${c?'active':''}"><div class="sdg-code">SDG ${s.id}</div><div class="sdg-goal">${escapeHtml(s.goal)}</div><div class="sdg-metric">${THB.format(c)}</div><small>${fmtMoney(b)} • ${PCT.format(total?b/total*100:0)}%</small></div>`}).join('');}
+function renderTable(){const tbody=document.querySelector('#projectTable tbody');document.getElementById('resultCount').textContent=`แสดง ${THB.format(state.filtered.length)} รายการ`;tbody.innerHTML=state.filtered.map((p,i)=>`<tr><td>${escapeHtml(p.category)}</td><td><strong>${escapeHtml(p.projectName)}</strong></td><td>${escapeHtml(p.agency||'ไม่พบข้อมูล')}</td><td class="num">${fmtMoney(p.budget)}</td><td class="num"><strong>${PCT.format(p.budgetPercent||0)}%</strong></td><td>${sdgPills(p.sdgs)}</td><td><span class="level ${levelClass(p.alignment)}">${escapeHtml(p.alignment||'ไม่ระบุ')}</span></td><td><button class="detail-btn" onclick="openDetail('${p.id}')">ดู</button></td></tr>`).join('') || '<tr><td colspan="8" class="empty">ไม่พบข้อมูลตามตัวกรอง</td></tr>';}
+window.openDetail=function(id){const p=state.projects.find(x=>x.id===id);if(!p)return;document.getElementById('detailTitle').textContent=p.projectName;document.getElementById('detailBody').innerHTML=`<div class="detail-grid"><div class="detail-card"><h4>ข้อมูลพื้นฐาน</h4><p>กลุ่ม: ${escapeHtml(p.category)}\nหน่วยงาน: ${escapeHtml(p.agency||'ไม่พบข้อมูล')}\nงบประมาณ: ${fmtMoney(p.budget)} (${PCT.format(p.budgetPercent||0)}% ของงบรวม)</p></div><div class="detail-card"><h4>SDGs / ระดับความสอดคล้อง</h4><p>${(p.sdgs||[]).map(s=>'SDG '+s).join(', ')||'ไม่ระบุ'}\nระดับ: ${escapeHtml(p.alignment||'ไม่ระบุ')}</p></div><div class="detail-card full"><h4>แผนงาน / ตัวชี้วัด</h4><p>${escapeHtml(p.plan||'ไม่พบข้อมูล')}\n\nตัวชี้วัด: ${escapeHtml(p.indicator||'ไม่พบข้อมูล')}</p></div><div class="detail-card"><h4>Output</h4><p>${escapeHtml(p.output||'ไม่พบข้อมูล')}</p></div><div class="detail-card"><h4>Outcome</h4><p>${escapeHtml(p.outcome||'ไม่พบข้อมูล')}</p></div><div class="detail-card full"><h4>เหตุผลการประเมิน</h4><p>${escapeHtml(p.assessment||'ไม่พบข้อมูล')}</p></div><div class="detail-card full recommend"><h4>ข้อเสนอแนะเพื่อปรับปรุง</h4><p>${escapeHtml(p.suggestion||'ควรเพิ่มตัวชี้วัดผลลัพธ์ ค่าเป้าหมาย ผู้ได้รับประโยชน์ และเชื่อมโยง SDGs ให้ชัดเจนขึ้น')}</p></div></div>`;document.getElementById('detailDialog').showModal();}
+function exportExcel(){const rows=[['กลุ่ม','ชื่อโครงการ','หน่วยงาน','งบประมาณ','% งบรวม','SDGs','ระดับความสอดคล้อง','ข้อเสนอแนะ']].concat(state.filtered.map(p=>[p.category,p.projectName,p.agency,p.budget,PCT.format(p.budgetPercent||0)+'%',(p.sdgs||[]).map(s=>'SDG '+s).join('; '),p.alignment,p.suggestion]));const htmlTable='<table>'+rows.map(r=>'<tr>'+r.map(c=>`<td>${escapeHtml(c)}</td>`).join('')+'</tr>').join('')+'</table>';const blob=new Blob(['\ufeff'+htmlTable],{type:'application/vnd.ms-excel'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nan-development-projects.xls';a.click();URL.revokeObjectURL(a.href)}
+load().catch(err=>{document.body.innerHTML='<pre style="padding:30px">เกิดข้อผิดพลาดในการโหลดข้อมูล: '+escapeHtml(err.message)+'</pre>';console.error(err);});

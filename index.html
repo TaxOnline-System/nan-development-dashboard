@@ -3,81 +3,75 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Provincial Project Alignment Dashboard</title>
+  <title>nan-development</title>
+  <meta name="description" content="ระบบติดตามและวิเคราะห์ความสอดคล้องโครงการจังหวัดน่านกับแผนพัฒนาจังหวัดและ SDGs" />
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
   <aside class="sidebar">
-    <div class="brand">
-      <div class="logo">PPAD</div>
-      <div><h1>Project Alignment</h1><p>จังหวัดน่าน • SDGs • แผน 71–75</p></div>
+    <div class="logo-box">
+      <img src="assets/logo-aiat.jpg" alt="AIAT" class="logo-aiat" />
+      <img src="assets/logo-rmutl.png" alt="RMUTL" class="logo-rmutl" />
     </div>
-    <nav id="categoryNav"></nav>
-    <div class="side-note">ระบบตัวอย่างพร้อมใช้งานบน GitHub Pages<br/>ข้อมูลจากไฟล์ Excel ที่อัปโหลด</div>
+    <div class="brand">
+      <div class="brand-kicker">Nan Province</div>
+      <h1>nan-development</h1>
+      <p>ระบบติดตามและวิเคราะห์ความสอดคล้องโครงการกับแผนพัฒนาจังหวัดและ SDGs</p>
+    </div>
+    <nav class="nav" id="categoryNav"></nav>
+    <div class="sidebar-footer">
+      <strong>GitHub Pages Ready</strong>
+      <span>Export: PDF / Excel เท่านั้น</span>
+    </div>
   </aside>
 
   <main class="content">
-    <header class="topbar">
+    <header class="hero">
       <div>
-        <h2>Dashboard วิเคราะห์ความสอดคล้องโครงการกับแผนจังหวัดและ SDGs</h2>
-        <p>สำหรับเจ้าของโครงการตรวจสอบข้อมูล แผนงาน ตัวชี้วัด SDGs และข้อเสนอแนะเพื่อปรับปรุงโครงการ</p>
+        <p class="eyebrow">Provincial Project Alignment Dashboard</p>
+        <h2>ระบบติดตามความสอดคล้องโครงการกับแผนพัฒนาจังหวัดและ SDGs</h2>
+        <p class="subtitle">สำหรับเจ้าของโครงการตรวจสอบข้อมูล งบประมาณ ร้อยละงบประมาณ SDGs ระดับความสอดคล้อง และข้อเสนอแนะเพื่อปรับปรุงโครงการ</p>
       </div>
       <div class="actions">
-        <button id="exportCsvBtn">Export CSV</button>
-        <button id="exportJsonBtn">Export JSON</button>
+        <button id="printBtn" class="btn secondary">Export PDF</button>
+        <button id="excelBtn" class="btn primary">Export Excel</button>
       </div>
     </header>
 
-    <section class="cards">
-      <div class="card"><span>จำนวนโครงการ</span><strong id="totalProjects">0</strong></div>
-      <div class="card"><span>งบประมาณรวม</span><strong id="totalBudget">0</strong><small>บาท</small></div>
-      <div class="card"><span>ระดับสูงมาก/สูง</span><strong id="highCount">0</strong></div>
-      <div class="card"><span>ต้องปรับปรุง</span><strong id="improveCount">0</strong></div>
+    <section class="kpi-grid">
+      <article class="kpi card-blue"><span>จำนวนโครงการ</span><strong id="totalProjects">0</strong><small>รายการทั้งหมดในระบบ</small></article>
+      <article class="kpi card-gold"><span>งบประมาณรวม</span><strong id="totalBudget">0</strong><small>บาท • 100%</small></article>
+      <article class="kpi card-green"><span>ระดับสูงมาก/สูง</span><strong id="highCount">0</strong><small>โครงการที่มีความสอดคล้องดี</small></article>
+      <article class="kpi card-red"><span>ควรปรับปรุง</span><strong id="improveCount">0</strong><small>โครงการระดับปานกลาง/ต่ำ</small></article>
     </section>
 
-    <section class="filters">
-      <input id="searchInput" placeholder="ค้นหาชื่อโครงการ / หน่วยงาน / Keyword / SDG" />
+    <section class="filter-panel">
+      <input id="searchInput" type="search" placeholder="ค้นหาชื่อโครงการ / หน่วยงาน / Keyword / SDG" />
       <select id="categoryFilter"><option value="all">ทุกกลุ่ม</option></select>
       <select id="alignmentFilter"><option value="all">ทุกระดับความสอดคล้อง</option></select>
       <select id="sdgFilter"><option value="all">ทุก SDGs</option></select>
-      <button id="resetBtn">ล้างตัวกรอง</button>
+      <button id="resetBtn" class="btn ghost">ล้างตัวกรอง</button>
     </section>
 
-    <section class="grid two">
-      <div class="panel">
-        <div class="panel-head"><h3>จำนวนโครงการตามกลุ่ม</h3></div>
-        <div id="categoryChart" class="bar-chart"></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><h3>จำนวนโครงการตามระดับความสอดคล้อง</h3></div>
-        <div id="alignmentChart" class="bar-chart"></div>
-      </div>
+    <section class="chart-grid two">
+      <article class="panel"><div class="panel-head"><h3>จำนวนโครงการตามกลุ่ม</h3><span id="categoryTotal"></span></div><div id="categoryChart" class="bar-list"></div></article>
+      <article class="panel"><div class="panel-head"><h3>งบประมาณตามกลุ่ม (%)</h3><span>คิดจากงบรวม</span></div><div id="budgetChart" class="bar-list"></div></article>
+      <article class="panel"><div class="panel-head"><h3>จำนวนโครงการตามระดับความสอดคล้อง</h3><span id="alignmentTotal"></span></div><div id="alignmentChart" class="bar-list"></div></article>
+      <article class="panel"><div class="panel-head"><h3>งบประมาณตามระดับความสอดคล้อง (%)</h3><span>คิดจากงบรวม</span></div><div id="alignmentBudgetChart" class="bar-list"></div></article>
     </section>
 
-    <section class="panel">
-      <div class="panel-head"><h3>SDGs ที่พบในโครงการ</h3><span id="sdgSummary"></span></div>
-      <div id="sdgChart" class="sdg-grid"></div>
-    </section>
+    <section class="panel"><div class="panel-head"><h3>SDGs ที่พบในโครงการ</h3><span id="sdgSummary"></span></div><div id="sdgChart" class="sdg-grid"></div></section>
 
-    <section class="panel">
+    <section class="panel table-panel">
       <div class="panel-head"><h3>รายการโครงการ</h3><span id="resultCount"></span></div>
-      <div class="table-wrap">
-        <table id="projectTable">
-          <thead><tr><th>กลุ่ม</th><th>ชื่อโครงการ</th><th>หน่วยงาน</th><th>งบประมาณ</th><th>SDGs</th><th>ระดับ</th><th>ดูรายละเอียด</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
+      <div class="table-wrap"><table id="projectTable"><thead><tr><th>กลุ่ม</th><th>ชื่อโครงการ</th><th>หน่วยงาน</th><th class="num">งบประมาณ</th><th class="num">% งบรวม</th><th>SDGs</th><th>ระดับ</th><th>รายละเอียด</th></tr></thead><tbody></tbody></table></div>
     </section>
   </main>
 
   <dialog id="detailDialog">
-    <div class="dialog-head">
-      <h3 id="detailTitle"></h3>
-      <button id="closeDialog">×</button>
-    </div>
+    <div class="dialog-head"><h3 id="detailTitle"></h3><button id="closeDialog" aria-label="ปิด">×</button></div>
     <div id="detailBody" class="detail-body"></div>
   </dialog>
-
   <script src="assets/app.js"></script>
 </body>
 </html>
