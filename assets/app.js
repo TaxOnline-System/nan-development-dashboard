@@ -1,105 +1,49 @@
-
-const state={projects:[],filtered:[],sdgs:[],activeCategory:'all'};
-const THB=new Intl.NumberFormat('th-TH',{maximumFractionDigits:0});
-const PCT=new Intl.NumberFormat('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
-function fmtMoney(n){n=Number(n||0); if(n>=1e9)return `${PCT.format(n/1e9)} พันล้าน`; if(n>=1e6)return `${PCT.format(n/1e6)} ล้านบาท`; return `${THB.format(n)} บาท`;}
-function escapeHtml(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
-function levelClass(a){a=String(a||''); if(a.includes('สูง')) return 'level-high'; if(a.includes('ปานกลาง')) return 'level-mid'; if(a.includes('ต่ำ')) return 'level-low'; return 'level-mid';}
-function sdgPills(arr){return (arr&&arr.length?arr:[]).map(s=>`<span class="pill">SDG ${s}</span>`).join('') || '<span class="pill">ไม่ระบุ</span>';}
-function groupBy(list,key){return list.reduce((m,x)=>{const k=typeof key==='function'?key(x):x[key];m[k]=(m[k]||[]).concat(x);return m;},{});}
-function sum(list,fn){return list.reduce((a,x)=>a+Number(fn(x)||0),0)}
+const state={projects:[],sdgs:[],filtered:[],totalBudget:0};
+const THB=new Intl.NumberFormat('th-TH');
+function escapeHtml(v){return String(v??'').replace(/[&<>"]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]))}
+function money(v){v=Number(v||0);if(v>=1e9)return `${(v/1e9).toFixed(2)} พันล้าน`;if(v>=1e6)return `${(v/1e6).toFixed(2)} ล้านบาท`;return THB.format(v)+' บาท'}
+function pct(v){return Number(v||0).toFixed(2)+'%'}
+function groupBy(arr,fn){return arr.reduce((m,x)=>{const k=typeof fn==='function'?fn(x):x[fn];(m[k||'ไม่ระบุ']??=[]).push(x);return m},{})}
+function sum(arr,fn){return arr.reduce((a,x)=>a+Number(fn(x)||0),0)}
+function levelClass(a){a=String(a||''); if(a.includes('สูง'))return 'level-high'; if(a.includes('ต่ำ'))return 'level-low'; if(a.includes('ปานกลาง'))return 'level-mid'; return 'level-none'}
+function sdgPills(s){return (s&&s.length?s:[]).map(x=>`<span class="pill">SDG ${x}</span>`).join('')||'<span class="pill">ไม่ระบุ</span>'}
 async function load(){
  const [projects,sdgs]=await Promise.all([fetch('data/projects.json').then(r=>r.json()),fetch('data/sdgs.json').then(r=>r.json())]);
- state.projects=projects; state.sdgs=sdgs; state.filtered=projects; initFilters(); renderAll(); bind();
+ state.projects=projects; state.sdgs=sdgs; state.filtered=projects; state.totalBudget=sum(projects,p=>p.budget);
+ init(); bind(); render();
 }
-function initFilters(){
- const cats=[...new Set(state.projects.map(p=>p.category||'ไม่ระบุ'))]; const order=['สังคม','ท่องเที่ยว','ทรัพยากร','การค้า','เกษตร']; cats.sort((a,b)=>(order.indexOf(a)<0?99:order.indexOf(a))-(order.indexOf(b)<0?99:order.indexOf(b)));
- const nav=document.getElementById('categoryNav'); nav.innerHTML=`<button class="active" data-cat="all">ภาพรวมทั้งหมด</button>`+cats.map(c=>`<button data-cat="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join('');
+function init(){
+ const order=['สังคม','ท่องเที่ยว','ทรัพยากร','การค้า','เกษตร'];
+ const cats=[...new Set(state.projects.map(p=>p.category||'ไม่ระบุ'))].sort((a,b)=>(order.indexOf(a)<0?99:order.indexOf(a))-(order.indexOf(b)<0?99:order.indexOf(b)));
+ document.getElementById('categoryNav').innerHTML='<button class="active" data-cat="all">ภาพรวมทั้งหมด</button>'+cats.map(c=>`<button data-cat="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join('');
  const cf=document.getElementById('categoryFilter'); cats.forEach(c=>cf.insertAdjacentHTML('beforeend',`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`));
  const aligns=[...new Set(state.projects.map(p=>p.alignment||'ไม่ระบุ'))].sort(); const af=document.getElementById('alignmentFilter'); aligns.forEach(a=>af.insertAdjacentHTML('beforeend',`<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`));
  const sf=document.getElementById('sdgFilter'); state.sdgs.forEach(s=>sf.insertAdjacentHTML('beforeend',`<option value="${s.id}">SDG ${s.id} ${escapeHtml(s.goal)}</option>`));
 }
 function bind(){
- ['searchInput','categoryFilter','alignmentFilter','sdgFilter'].forEach(id=>document.getElementById(id).addEventListener('input',applyFilters));
- document.getElementById('resetBtn').onclick=()=>{document.getElementById('searchInput').value='';document.getElementById('categoryFilter').value='all';document.getElementById('alignmentFilter').value='all';document.getElementById('sdgFilter').value='all';state.activeCategory='all';document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.cat==='all'));applyFilters();};
+ ['searchInput','categoryFilter','alignmentFilter','sdgFilter'].forEach(id=>document.getElementById(id).addEventListener('input',apply));
+ document.getElementById('resetBtn').onclick=()=>{['searchInput'].forEach(id=>document.getElementById(id).value='');['categoryFilter','alignmentFilter','sdgFilter'].forEach(id=>document.getElementById(id).value='all');apply()};
+ document.getElementById('categoryNav').onclick=e=>{if(!e.target.matches('button'))return;document.getElementById('categoryFilter').value=e.target.dataset.cat;apply()};
  document.getElementById('closeDialog').onclick=()=>document.getElementById('detailDialog').close();
- document.getElementById('categoryNav').addEventListener('click',e=>{if(e.target.matches('button')){state.activeCategory=e.target.dataset.cat;document.getElementById('categoryFilter').value=state.activeCategory;document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b===e.target));applyFilters();}});
 }
-function applyFilters(){
+function apply(){
  const q=document.getElementById('searchInput').value.trim().toLowerCase(); const c=document.getElementById('categoryFilter').value; const a=document.getElementById('alignmentFilter').value; const s=document.getElementById('sdgFilter').value;
- state.activeCategory=c;
  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.cat===c));
  state.filtered=state.projects.filter(p=>{
-  const text=[p.projectName,p.agency,p.category,p.developmentIssue,p.developmentApproach,p.plan,p.indicator,p.criteria,p.output,p.outcome,p.sdgText,p.sdgKeyword,p.assessment,p.suggestion].join(' ').toLowerCase();
-  return (!q||text.includes(q)) && (c==='all'||p.category===c) && (a==='all'||p.alignment===a) && (s==='all'||(p.sdgs||[]).map(String).includes(s));
- }); renderAll();
+   const hay=[p.projectName,p.agency,p.category,p.developmentIssue,p.developmentApproach,p.plan,p.indicator,p.output,p.outcome,p.sdgText,p.sdgKeyword,p.alignment,p.assessment,p.criteria,p.suggestion].join(' ').toLowerCase();
+   return (!q||hay.includes(q))&&(c==='all'||p.category===c)&&(a==='all'||p.alignment===a)&&(s==='all'||(p.sdgs||[]).map(String).includes(s));
+ }); render();
 }
-function renderAll(){renderKpis();renderCharts();renderInsights();renderSdgs();renderTable();}
-function renderKpis(){const list=state.filtered;const total=sum(list,p=>p.budget);const high=list.filter(p=>String(p.alignment).includes('สูง')).length;const improve=list.length-high;document.getElementById('totalProjects').textContent=THB.format(list.length);document.getElementById('totalBudget').textContent=fmtMoney(total);document.getElementById('highCount').textContent=THB.format(high);document.getElementById('improveCount').textContent=THB.format(improve);}
-function renderBar(elId,items,mode='count'){const el=document.getElementById(elId);if(!items.length){el.innerHTML='<div class="empty">ไม่พบข้อมูล</div>';return}const max=Math.max(...items.map(x=>x.value),1);el.innerHTML=items.map(x=>`<div class="bar-row"><div class="bar-label" title="${escapeHtml(x.label)}">${escapeHtml(x.label)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(3,x.value/max*100)}%"></div></div><div class="bar-value">${x.display}</div></div>`).join('');}
-function renderCharts(){const list=state.filtered;const totalBudget=sum(list,p=>p.budget);const byCat=Object.entries(groupBy(list,'category')).map(([label,arr])=>({label,value:arr.length,display:`${THB.format(arr.length)} โครงการ`})).sort((a,b)=>b.value-a.value);renderBar('categoryChart',byCat);document.getElementById('categoryTotal').textContent=`รวม ${THB.format(list.length)} โครงการ`;
- const bCat=Object.entries(groupBy(list,'category')).map(([label,arr])=>{const v=sum(arr,p=>p.budget);return {label,value:v,display:`${fmtMoney(v)} • ${PCT.format(totalBudget?v/totalBudget*100:0)}%`}}).sort((a,b)=>b.value-a.value);renderBar('budgetChart',bCat);
- const byAl=Object.entries(groupBy(list,'alignment')).map(([label,arr])=>({label,value:arr.length,display:`${THB.format(arr.length)} โครงการ`})).sort((a,b)=>b.value-a.value);renderBar('alignmentChart',byAl);document.getElementById('alignmentTotal').textContent=`รวม ${THB.format(list.length)} โครงการ`;
- const bAl=Object.entries(groupBy(list,'alignment')).map(([label,arr])=>{const v=sum(arr,p=>p.budget);return {label,value:v,display:`${fmtMoney(v)} • ${PCT.format(totalBudget?v/totalBudget*100:0)}%`}}).sort((a,b)=>b.value-a.value);renderBar('alignmentBudgetChart',bAl);}
-function renderSdgs(){const counts={};const budgets={};state.filtered.forEach(p=>(p.sdgs||[]).forEach(s=>{counts[s]=(counts[s]||0)+1;budgets[s]=(budgets[s]||0)+Number(p.budget||0)}));const total=sum(state.filtered,p=>p.budget);document.getElementById('sdgSummary').textContent=`พบ ${Object.keys(counts).length} SDGs`;document.getElementById('sdgChart').innerHTML=state.sdgs.map(s=>{const c=counts[s.id]||0;const b=budgets[s.id]||0;return `<div class="sdg-card ${c?'active':''}"><div class="sdg-code">SDG ${s.id}</div><div class="sdg-goal">${escapeHtml(s.goal)}</div><div class="sdg-metric">${THB.format(c)}</div><small>${fmtMoney(b)} • ${PCT.format(total?b/total*100:0)}%</small></div>`}).join('');}
-function shortText(text,limit=120){text=String(text||'ไม่พบข้อมูล');return text.length>limit?text.slice(0,limit)+'…':text;}
-function renderInsights(){
- const list=state.filtered; const high=list.filter(p=>String(p.alignment).includes('สูง')).length; const improve=list.length-high;
- const missingKpi=list.filter(p=>!p.indicator||String(p.indicator).includes('ไม่พบ')).length;
- const total=sum(list,p=>p.budget);
- const topBudget=[...list].sort((a,b)=>Number(b.budget||0)-Number(a.budget||0)).slice(0,3).map(p=>`<li><strong>${escapeHtml(shortText(p.projectName,70))}</strong><span>${fmtMoney(p.budget)} • ${PCT.format(total?p.budget/total*100:0)}%</span></li>`).join('');
- document.getElementById('insightCards').innerHTML=`
-  <article class="insight-card"><b>โครงการที่ควรปรับแก้</b><strong>${THB.format(improve)}</strong><span>ควรเพิ่ม Outcome, KPI, ค่าเป้าหมาย และความเชื่อมโยงกับแผนงานหลัก</span></article>
-  <article class="insight-card"><b>โครงการที่สอดคล้องสูง</b><strong>${THB.format(high)}</strong><span>ใช้เป็นตัวอย่างรูปแบบการเขียน Output/Outcome และตัวชี้วัด</span></article>
-  <article class="insight-card"><b>ตัวชี้วัดไม่ชัดเจน</b><strong>${THB.format(missingKpi)}</strong><span>ควรระบุตัวชี้วัด ค่าเป้าหมาย หน่วยนับ และปีที่วัดผล</span></article>
-  <article class="insight-card wide"><b>โครงการงบประมาณสูงสุด</b><ol>${topBudget||'<li>ไม่พบข้อมูล</li>'}</ol></article>`;
+function render(){renderKpi();renderBars();renderSdg();renderTop();renderTable()}
+function renderKpi(){const list=state.filtered;const total=sum(list,p=>p.budget);document.getElementById('totalProjects').textContent=THB.format(list.length);document.getElementById('totalBudget').textContent=money(total);document.getElementById('budgetRatio').textContent=`${pct(state.totalBudget?total/state.totalBudget*100:0)} ของงบทั้งหมด`;document.getElementById('highProjects').textContent=THB.format(list.filter(p=>String(p.alignment).includes('สูง')).length);document.getElementById('improveProjects').textContent=THB.format(list.filter(p=>String(p.alignment).includes('ปานกลาง')||String(p.alignment).includes('ต่ำ')).length)}
+function bar(id,items){const max=Math.max(...items.map(x=>x.value),1);document.getElementById(id).innerHTML=items.length?items.map(x=>`<div class="bar-row"><div class="bar-label" title="${escapeHtml(x.label)}">${escapeHtml(x.label)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(4,x.value/max*100)}%"></div></div><div class="bar-value">${x.text}</div></div>`).join(''):'<div class="empty">ไม่พบข้อมูล</div>'}
+function renderBars(){const list=state.filtered;const total=sum(list,p=>p.budget);document.getElementById('categoryCaption').textContent=`รวม ${THB.format(list.length)} โครงการ`;
+ bar('categoryChart',Object.entries(groupBy(list,'category')).map(([label,arr])=>({label,value:arr.length,text:`${THB.format(arr.length)} โครงการ`})).sort((a,b)=>b.value-a.value));
+ bar('budgetCategoryChart',Object.entries(groupBy(list,'category')).map(([label,arr])=>{const v=sum(arr,p=>p.budget);return{label,value:v,text:`${money(v)} • ${pct(total?v/total*100:0)}`}}).sort((a,b)=>b.value-a.value));
+ bar('alignmentChart',Object.entries(groupBy(list,'alignment')).map(([label,arr])=>({label,value:arr.length,text:`${THB.format(arr.length)} โครงการ`})).sort((a,b)=>b.value-a.value));
 }
-function renderTable(){
- const tbody=document.querySelector('#projectTable tbody');
- const total=sum(state.filtered,p=>p.budget);
- document.getElementById('resultCount').textContent=`แสดง ${THB.format(state.filtered.length)} รายการ`;
- tbody.innerHTML=state.filtered.map((p,i)=>`<tr>
-  <td><span class="category-tag">${escapeHtml(p.category||'ไม่ระบุ')}</span></td>
-  <td><strong>${escapeHtml(p.projectName)}</strong><div class="subtext">หน่วยงาน: ${escapeHtml(p.agency||'ไม่พบข้อมูล')}</div></td>
-  <td><b>แผนงาน:</b> ${escapeHtml(shortText(p.plan,95))}<br><b>ตัวชี้วัด:</b> ${escapeHtml(shortText(p.indicator,95))}</td>
-  <td class="num">${fmtMoney(p.budget)}</td>
-  <td class="num"><strong>${PCT.format(total?p.budget/total*100:0)}%</strong></td>
-  <td>${sdgPills(p.sdgs)}</td>
-  <td><span class="level ${levelClass(p.alignment)}">${escapeHtml(p.alignment||'ไม่ระบุ')}</span></td>
-  <td>${escapeHtml(shortText(p.suggestion,130))}</td>
-  <td><button class="detail-btn" onclick="openDetail('${p.id}')">ดูรายละเอียด</button></td>
- </tr>`).join('') || '<tr><td colspan="9" class="empty">ไม่พบข้อมูลตามตัวกรอง</td></tr>';
-}
-function buildChecklist(p){
- const items=[];
- items.push(['แผนงานหลัก','ระบุให้ตรงกับแผนพัฒนาจังหวัด เช่น ประเด็นการพัฒนา แนวทางการพัฒนา และแผนงานหลัก','มีข้อมูลแผนงาน: '+(p.plan||'ไม่พบข้อมูล')]);
- items.push(['ตัวชี้วัด','เพิ่ม KPI ที่วัดได้ เช่น จำนวนผู้ได้รับประโยชน์ ร้อยละที่เพิ่มขึ้น ต้นทุนที่ลดลง รายได้ที่เพิ่มขึ้น','ตัวชี้วัดเดิม: '+(p.indicator||'ไม่พบข้อมูล')]);
- items.push(['Output','เขียนผลผลิตให้เป็นสิ่งที่ส่งมอบได้จริง มีจำนวน ขนาด ปริมาณ พื้นที่ ระยะทาง หรือจำนวนครั้ง','Output เดิม: '+(p.output||'ไม่พบข้อมูล')]);
- items.push(['Outcome','เขียนผลลัพธ์หลังดำเนินโครงการให้เชื่อมกับเป้าหมายจังหวัดและวัดผลได้','Outcome เดิม: '+(p.outcome||'ไม่พบข้อมูล')]);
- items.push(['SDGs','เพิ่ม Keyword และผลลัพธ์ให้รองรับ SDGs ที่เกี่ยวข้องอย่างชัดเจน','SDGs เดิม: '+((p.sdgs||[]).map(s=>'SDG '+s).join(', ')||'ไม่ระบุ')]);
- return items.map(([h,a,b])=>`<div class="check-card"><h5>${escapeHtml(h)}</h5><p><b>ควรปรับ:</b> ${escapeHtml(a)}</p><p><b>ข้อมูลปัจจุบัน:</b> ${escapeHtml(b)}</p></div>`).join('');
-}
-window.openDetail=function(id){
- const p=state.projects.find(x=>x.id===id); if(!p)return;
- const total=sum(state.projects,p=>p.budget);
- document.getElementById('detailTitle').textContent=p.projectName;
- document.getElementById('detailBody').innerHTML=`
- <div class="detail-summary">
-  <div><span>กลุ่ม</span><strong>${escapeHtml(p.category||'ไม่ระบุ')}</strong></div>
-  <div><span>งบประมาณ</span><strong>${fmtMoney(p.budget)}</strong><small>${PCT.format(total?p.budget/total*100:0)}% ของงบรวมทั้งหมด</small></div>
-  <div><span>ระดับความสอดคล้อง</span><strong>${escapeHtml(p.alignment||'ไม่ระบุ')}</strong></div>
-  <div><span>SDGs</span><strong>${(p.sdgs||[]).map(s=>'SDG '+s).join(', ')||'ไม่ระบุ'}</strong></div>
- </div>
- <div class="detail-grid">
-  <div class="detail-card"><h4>ข้อมูลพื้นฐาน</h4><p>หน่วยงาน: ${escapeHtml(p.agency||'ไม่พบข้อมูล')}\nประเด็นการพัฒนา: ${escapeHtml(p.developmentIssue||'ไม่พบข้อมูล')}\nแนวทางการพัฒนา: ${escapeHtml(p.developmentApproach||'ไม่พบข้อมูล')}</p></div>
-  <div class="detail-card"><h4>SDGs และ Keyword ที่จับได้</h4><p>${escapeHtml(p.sdgText||'ไม่พบข้อมูล')}\n\nKeyword: ${escapeHtml(p.sdgKeyword||'ไม่พบข้อมูล')}</p></div>
-  <div class="detail-card full plan-card"><h4>แผนงานหลัก / ตัวชี้วัด / เกณฑ์ที่ใช้ประเมิน</h4><p><b>แผนงานหลัก:</b> ${escapeHtml(p.plan||'ไม่พบข้อมูล')}\n\n<b>ตัวชี้วัด:</b> ${escapeHtml(p.indicator||'ไม่พบข้อมูล')}\n\n<b>เกณฑ์ที่ใช้ประเมิน:</b> ${escapeHtml(p.criteria||'ไม่พบข้อมูล')}</p></div>
-  <div class="detail-card"><h4>Output ปัจจุบัน</h4><p>${escapeHtml(p.output||'ไม่พบข้อมูล')}</p></div>
-  <div class="detail-card"><h4>Outcome ปัจจุบัน</h4><p>${escapeHtml(p.outcome||'ไม่พบข้อมูล')}</p></div>
-  <div class="detail-card full"><h4>เหตุผลการประเมินความสอดคล้อง</h4><p>${escapeHtml(p.assessment||'ไม่พบข้อมูล')}</p></div>
-  <div class="detail-card full recommend"><h4>ข้อเสนอแนะหลักเพื่อปรับแก้เอกสารโครงการ</h4><p>${escapeHtml(p.suggestion||'ควรเพิ่มตัวชี้วัดผลลัพธ์ ค่าเป้าหมาย ผู้ได้รับประโยชน์ และเชื่อมโยง SDGs ให้ชัดเจนขึ้น')}</p></div>
-  <div class="detail-card full"><h4>Checklist สำหรับเจ้าของโครงการก่อนแก้ไข</h4><div class="checklist">${buildChecklist(p)}</div></div>
- </div>`;
- document.getElementById('detailDialog').showModal();
-}
-load().catch(err=>{document.body.innerHTML='<pre style="padding:30px">เกิดข้อผิดพลาดในการโหลดข้อมูล: '+escapeHtml(err.message)+'</pre>';console.error(err);});
+function renderTop(){const top=[...state.filtered].sort((a,b)=>b.budget-a.budget).slice(0,5);document.getElementById('topBudgetList').innerHTML=top.length?top.map((p,i)=>`<div class="top-item"><p class="top-title"><span class="rank">${i+1}</span>${escapeHtml(p.projectName)}</p><div class="top-meta">${money(p.budget)} • ${pct(p.budgetPercent)} ของงบรวมทั้งหมด • ${escapeHtml(p.category)}</div></div>`).join(''):'<div class="empty">ไม่พบข้อมูล</div>'}
+function renderSdg(){const counts={},budgets={};state.filtered.forEach(p=>(p.sdgs||[]).forEach(s=>{counts[s]=(counts[s]||0)+1;budgets[s]=(budgets[s]||0)+Number(p.budget||0)}));const total=sum(state.filtered,p=>p.budget);document.getElementById('sdgCaption').textContent=`พบ ${Object.keys(counts).length} เป้าหมาย`;document.getElementById('sdgGrid').innerHTML=state.sdgs.map(s=>{const c=counts[s.id]||0,b=budgets[s.id]||0;return `<div class="sdg-card ${c?'active':''}"><div class="sdg-code">SDG ${s.id}</div><div class="sdg-goal">${escapeHtml(s.goal)}</div><div class="sdg-metric">${THB.format(c)}</div><small>${money(b)} • ${pct(total?b/total*100:0)}</small></div>`}).join('')}
+function renderTable(){document.getElementById('resultCount').textContent=`แสดง ${THB.format(state.filtered.length)} รายการ`;document.getElementById('tableBody').innerHTML=state.filtered.map(p=>`<tr><td>${escapeHtml(p.category)}</td><td class="project-cell"><strong>${escapeHtml(p.projectName)}</strong><div class="muted">${escapeHtml(p.agency||'ไม่พบข้อมูล')}</div></td><td class="plan-cell"><span><b>แผนงาน:</b> ${escapeHtml(p.plan||'ไม่พบข้อมูล')}</span><span><b>ตัวชี้วัด:</b> ${escapeHtml(p.indicator||'ไม่พบข้อมูล')}</span></td><td class="money">${money(p.budget)}</td><td class="pct">${pct(p.budgetPercent)}</td><td>${sdgPills(p.sdgs)}</td><td><span class="level ${levelClass(p.alignment)}">${escapeHtml(p.alignment||'ไม่ระบุ')}</span></td><td><button class="detail-open" onclick="detail('${p.id}')">รายละเอียด</button></td></tr>`).join('')||'<tr><td colspan="8" class="empty">ไม่พบข้อมูล</td></tr>'}
+window.detail=function(id){const p=state.projects.find(x=>x.id===id);if(!p)return;document.getElementById('detailCategory').textContent=`${p.category} • ${money(p.budget)} • ${pct(p.budgetPercent)} ของงบรวม`;document.getElementById('detailTitle').textContent=p.projectName;document.getElementById('detailBody').innerHTML=`<div class="detail-grid"><div class="detail-card"><h4>ข้อมูลเจ้าของโครงการ</h4><p>หน่วยงาน: ${escapeHtml(p.agency||'ไม่พบข้อมูล')}\nกลุ่ม: ${escapeHtml(p.category||'ไม่ระบุ')}\nงบประมาณ: ${money(p.budget)} (${pct(p.budgetPercent)} ของงบรวม)</p></div><div class="detail-card"><h4>SDGs และระดับความสอดคล้อง</h4><p>${(p.sdgs||[]).map(s=>'SDG '+s).join(', ')||'ไม่ระบุ'}\nระดับ: ${escapeHtml(p.alignment||'ไม่ระบุ')}\nKeyword: ${escapeHtml(p.sdgKeyword||'ไม่พบข้อมูล')}</p></div><div class="detail-card full criteria"><h4>แผนงานหลัก / ตัวชี้วัด / เกณฑ์ที่ใช้ประเมิน</h4><p>ประเด็นการพัฒนา: ${escapeHtml(p.developmentIssue||'ไม่พบข้อมูล')}\nแนวทางการพัฒนา: ${escapeHtml(p.developmentApproach||'ไม่พบข้อมูล')}\nแผนงานหลัก: ${escapeHtml(p.plan||'ไม่พบข้อมูล')}\nตัวชี้วัด: ${escapeHtml(p.indicator||'ไม่พบข้อมูล')}\n\nเกณฑ์ประเมิน: ${escapeHtml(p.criteria||'ไม่พบข้อมูล')}</p></div><div class="detail-card"><h4>Output ที่ระบุในโครงการ</h4><p>${escapeHtml(p.output||'ไม่พบข้อมูล')}</p></div><div class="detail-card"><h4>Outcome ที่ระบุในโครงการ</h4><p>${escapeHtml(p.outcome||'ไม่พบข้อมูล')}</p></div><div class="detail-card full"><h4>เหตุผลการประเมิน</h4><p>${escapeHtml(p.assessment||'ไม่พบข้อมูล')}</p></div><div class="detail-card full recommend"><h4>ข้อเสนอแนะเพื่อให้เข้าเกณฑ์มากขึ้น</h4><p>${escapeHtml(p.suggestion||'ควรเพิ่มตัวชี้วัดเชิงปริมาณ ค่าเป้าหมาย ผู้ได้รับประโยชน์ วิธีติดตามผล และเหตุผลเชื่อมโยง SDGs ให้ชัดเจน')}</p></div></div>`;document.getElementById('detailDialog').showModal()}
+load().catch(err=>{document.body.innerHTML=`<pre style="padding:24px">โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(err.message)}</pre>`;console.error(err)})

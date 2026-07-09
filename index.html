@@ -4,83 +4,101 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>nan-development</title>
-  <meta name="description" content="ระบบติดตามและวิเคราะห์ความสอดคล้องโครงการจังหวัดน่านกับแผนพัฒนาจังหวัดและ SDGs" />
+  <meta name="description" content="ระบบติดตามและวิเคราะห์ความสอดคล้องโครงการจังหวัดน่านกับแผนพัฒนาและ SDGs" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
   <aside class="sidebar">
-    <div class="logo-box">
-      <img src="assets/logo-aiat.jpg" alt="AIAT" class="logo-aiat" />
-      <img src="assets/logo-rmutl.png" alt="RMUTL" class="logo-rmutl" />
+    <div class="logos">
+      <img src="assets/logo-aiat.jpg" alt="AIAT" class="logo-aiat">
+      <img src="assets/logo-rmutl.png" alt="RMUTL" class="logo-rmutl">
     </div>
     <div class="brand">
-      <div class="brand-kicker">Nan Province</div>
+      <span>Nan Development</span>
       <h1>nan-development</h1>
-      <p>ระบบสำหรับเจ้าของโครงการตรวจสอบความสอดคล้องกับแผนพัฒนาจังหวัด ตัวชี้วัด แผนงานหลัก และ SDGs</p>
+      <p>ระบบติดตามความสอดคล้องโครงการจังหวัดน่านกับแผนพัฒนาจังหวัดและ SDGs</p>
     </div>
     <nav class="nav" id="categoryNav"></nav>
-    <div class="sidebar-footer">
-      <strong>Owner Review Dashboard</strong>
-      <span>ใช้ตรวจสอบข้อมูลและปรับแก้โครงการก่อนเสนอแผน</span>
+    <div class="guide-mini">
+      <strong>แนวทางสำหรับเจ้าของโครงการ</strong>
+      <p>ตรวจสอบแผนงานหลัก ตัวชี้วัด Output/Outcome SDGs และข้อเสนอแนะก่อนปรับแก้เอกสารโครงการ</p>
     </div>
   </aside>
 
-  <main class="content">
-    <header class="hero">
+  <main class="main">
+    <header class="topbar">
       <div>
         <p class="eyebrow">Provincial Project Alignment Dashboard</p>
         <h2>ระบบติดตามความสอดคล้องโครงการกับแผนพัฒนาจังหวัดและ SDGs</h2>
-        <p class="subtitle">สำหรับเจ้าของโครงการตรวจสอบข้อมูล แผนงานหลัก ตัวชี้วัด SDGs เกณฑ์ประเมิน และข้อเสนอแนะเพื่อนำไปปรับแก้ให้สอดคล้องกับแผนพัฒนาจังหวัด</p>
+        <p class="sub">ใช้สำหรับให้เจ้าของโครงการตรวจสอบข้อมูล จุดที่ยังไม่ครบ และปรับแก้โครงการให้เชื่อมโยงกับแผนงานหลัก ตัวชี้วัด ค่าเป้าหมาย และเกณฑ์ SDGs ได้ชัดเจนขึ้น</p>
       </div>
-      <div class="status-badge">โหมดตรวจสอบข้อมูล</div>
+      <div class="status-pill">ไม่มีเมนู Export • ใช้งานบน GitHub Pages</div>
     </header>
 
-    <section class="owner-guide">
-      <article><strong>1. ตรวจสอบแผนงานหลัก</strong><span>ดูว่าโครงการเชื่อมกับประเด็นการพัฒนา แนวทางการพัฒนา และแผนงานหลักชัดเจนหรือไม่</span></article>
-      <article><strong>2. ตรวจสอบตัวชี้วัด</strong><span>ดูว่ามี KPI ค่าเป้าหมาย หน่วยนับ และผู้ได้รับประโยชน์ที่วัดผลได้หรือไม่</span></article>
-      <article><strong>3. ตรวจสอบ SDGs</strong><span>ดู SDGs ที่ระบบจับได้ และเพิ่ม Keyword/Outcome ให้รองรับ SDGs ที่เกี่ยวข้อง</span></article>
-      <article><strong>4. นำข้อเสนอแนะไปแก้ไข</strong><span>เปิดรายละเอียดโครงการแล้วใช้หัวข้อ “สิ่งที่ควรปรับแก้” เป็นแนวทางแก้เอกสาร</span></article>
+    <section class="kpis">
+      <article class="kpi"><span>จำนวนโครงการ</span><strong id="totalProjects">0</strong><small>รายการที่แสดงตามตัวกรอง</small></article>
+      <article class="kpi"><span>งบประมาณรวม</span><strong id="totalBudget">0</strong><small id="budgetRatio">100%</small></article>
+      <article class="kpi"><span>ระดับสูง/สูงมาก</span><strong id="highProjects">0</strong><small>โครงการที่เชื่อมโยงแผนชัดเจน</small></article>
+      <article class="kpi alert"><span>ควรปรับปรุง</span><strong id="improveProjects">0</strong><small>ปานกลาง/ต่ำ ต้องเพิ่มข้อมูลประกอบ</small></article>
     </section>
 
-    <section class="kpi-grid">
-      <article class="kpi card-blue"><span>จำนวนโครงการ</span><strong id="totalProjects">0</strong><small>รายการที่แสดงตามตัวกรอง</small></article>
-      <article class="kpi card-gold"><span>งบประมาณรวม</span><strong id="totalBudget">0</strong><small>คิดเป็น 100% ของรายการที่แสดง</small></article>
-      <article class="kpi card-green"><span>สอดคล้องสูง</span><strong id="highCount">0</strong><small>ระดับสูงมาก/สูง</small></article>
-      <article class="kpi card-red"><span>ต้องปรับแก้</span><strong id="improveCount">0</strong><small>ระดับปานกลาง/ต่ำ/ไม่ระบุ</small></article>
-    </section>
-
-    <section class="filter-panel">
-      <input id="searchInput" type="search" placeholder="ค้นหาชื่อโครงการ / หน่วยงาน / แผนงาน / ตัวชี้วัด / Keyword / SDG" />
+    <section class="filters">
+      <input id="searchInput" placeholder="ค้นหาโครงการ / หน่วยงาน / แผนงาน / ตัวชี้วัด / SDG / Keyword">
       <select id="categoryFilter"><option value="all">ทุกกลุ่ม</option></select>
       <select id="alignmentFilter"><option value="all">ทุกระดับความสอดคล้อง</option></select>
       <select id="sdgFilter"><option value="all">ทุก SDGs</option></select>
-      <button id="resetBtn" class="btn ghost">ล้างตัวกรอง</button>
+      <button id="resetBtn">ล้างตัวกรอง</button>
     </section>
 
-    <section class="chart-grid two">
-      <article class="panel"><div class="panel-head"><h3>จำนวนโครงการตามกลุ่ม</h3><span id="categoryTotal"></span></div><div id="categoryChart" class="bar-list"></div></article>
-      <article class="panel"><div class="panel-head"><h3>งบประมาณตามกลุ่ม (%)</h3><span>คิดจากงบรวมของรายการที่แสดง</span></div><div id="budgetChart" class="bar-list"></div></article>
-      <article class="panel"><div class="panel-head"><h3>จำนวนโครงการตามระดับความสอดคล้อง</h3><span id="alignmentTotal"></span></div><div id="alignmentChart" class="bar-list"></div></article>
-      <article class="panel"><div class="panel-head"><h3>งบประมาณตามระดับความสอดคล้อง (%)</h3><span>ชี้ว่าทรัพยากรถูกใช้กับโครงการระดับใด</span></div><div id="alignmentBudgetChart" class="bar-list"></div></article>
+    <section class="insight-grid">
+      <article class="panel"><div class="panel-title"><h3>จำนวนโครงการตามกลุ่ม</h3><span id="categoryCaption"></span></div><div id="categoryChart" class="bar-list"></div></article>
+      <article class="panel"><div class="panel-title"><h3>งบประมาณตามกลุ่ม (%)</h3><span>เทียบกับงบประมาณรวมที่แสดง</span></div><div id="budgetCategoryChart" class="bar-list"></div></article>
+      <article class="panel"><div class="panel-title"><h3>ระดับความสอดคล้อง</h3><span>ตามเกณฑ์การประเมิน</span></div><div id="alignmentChart" class="bar-list"></div></article>
+      <article class="panel"><div class="panel-title"><h3>โครงการงบประมาณสูงสุด</h3><span>ตัวอักษรย่อขนาด อ่านง่ายขึ้น</span></div><div id="topBudgetList" class="top-list"></div></article>
     </section>
 
-    <section class="panel insight-panel">
-      <div class="panel-head"><h3>ภาพรวมสำหรับการปรับแก้โครงการ</h3><span>สรุปจากรายการที่แสดง</span></div>
-      <div id="insightCards" class="insight-grid"></div>
+    <section class="panel full">
+      <div class="panel-title"><h3>SDGs ที่เชื่อมโยงกับโครงการ</h3><span id="sdgCaption"></span></div>
+      <div id="sdgGrid" class="sdg-grid"></div>
     </section>
 
-    <section class="panel"><div class="panel-head"><h3>SDGs ที่พบในโครงการ</h3><span id="sdgSummary"></span></div><div id="sdgChart" class="sdg-grid"></div></section>
+    <section class="owner-guide">
+      <div>
+        <h3>Checklist สำหรับเจ้าของโครงการก่อนปรับแก้</h3>
+        <p>ใช้ตรวจสอบว่าโครงการมีข้อมูลครบพอที่จะประเมินความสอดคล้องกับแผนพัฒนาจังหวัดและ SDGs หรือไม่</p>
+      </div>
+      <div class="check-grid">
+        <div><strong>1. แผนงานหลัก</strong><span>ระบุให้ตรงกับแผนจังหวัด ไม่ใช้คำกว้างเกินไป</span></div>
+        <div><strong>2. ตัวชี้วัด</strong><span>เพิ่มค่าเป้าหมายที่วัดผลได้ เช่น จำนวนคน รายได้ ต้นทุน เวลา พื้นที่</span></div>
+        <div><strong>3. Output</strong><span>ระบุสิ่งส่งมอบ ขนาด ปริมาณ พื้นที่ หรือจำนวนกิจกรรม</span></div>
+        <div><strong>4. Outcome</strong><span>เชื่อมผลลัพธ์กับประชาชน เศรษฐกิจ สิ่งแวดล้อม หรือคุณภาพชีวิต</span></div>
+        <div><strong>5. SDGs</strong><span>ใส่เหตุผลและ Keyword ที่ทำให้เข้าเกณฑ์ SDG แต่ละข้อ</span></div>
+        <div><strong>6. หลักฐาน</strong><span>เพิ่มกลุ่มเป้าหมาย ผู้ได้รับประโยชน์ และวิธีติดตามผลหลังดำเนินงาน</span></div>
+      </div>
+    </section>
 
     <section class="panel table-panel">
-      <div class="panel-head"><h3>รายการโครงการสำหรับเจ้าของโครงการตรวจสอบ</h3><span id="resultCount"></span></div>
-      <div class="table-wrap"><table id="projectTable"><thead><tr><th>กลุ่ม</th><th>ชื่อโครงการ</th><th>แผนงานหลัก / ตัวชี้วัดที่ต้องเชื่อมโยง</th><th class="num">งบประมาณ</th><th class="num">% งบรวม</th><th>SDGs</th><th>ระดับ</th><th>ข้อเสนอแนะย่อ</th><th>ตรวจสอบ</th></tr></thead><tbody></tbody></table></div>
+      <div class="panel-title"><h3>รายการโครงการสำหรับตรวจสอบและปรับแก้</h3><span id="resultCount"></span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>กลุ่ม</th><th>ชื่อโครงการ</th><th>แผนงานหลัก / ตัวชี้วัด</th><th>งบประมาณ</th><th>%</th><th>SDGs</th><th>ระดับ</th><th>ดูข้อมูล</th></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
     </section>
   </main>
 
   <dialog id="detailDialog">
-    <div class="dialog-head"><h3 id="detailTitle"></h3><button id="closeDialog" aria-label="ปิด">×</button></div>
+    <div class="dialog-head">
+      <div><span id="detailCategory"></span><h3 id="detailTitle"></h3></div>
+      <button id="closeDialog">×</button>
+    </div>
     <div id="detailBody" class="detail-body"></div>
   </dialog>
+
   <script src="assets/app.js"></script>
 </body>
 </html>
