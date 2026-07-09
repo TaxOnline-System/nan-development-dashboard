@@ -1,42 +1,43 @@
 # nan-development
 
-ระบบ Dashboard สำหรับติดตามความสอดคล้องของโครงการจังหวัดน่านกับแผนพัฒนาจังหวัดและ SDGs
+ระบบ Dashboard สำหรับติดตามและวิเคราะห์ความสอดคล้องของโครงการจังหวัดน่านกับแผนพัฒนาจังหวัดและ SDGs
 
-## คุณสมบัติ
+## ข้อมูลในระบบ
 
-- Dashboard ภาพรวมโครงการ
+- จำนวนโครงการ: 112 รายการ
+- งบประมาณรวม: 1,067,920,918.84 บาท
 - แบ่งกลุ่ม: สังคม, ท่องเที่ยว, ทรัพยากร, การค้า, เกษตร
-- แสดงงบประมาณพร้อมร้อยละของงบรวม
-- วิเคราะห์ SDGs ที่เกี่ยวข้อง
-- ค้นหาและกรองข้อมูล
-- หน้ารายละเอียดโครงการ
-- Export PDF ด้วยคำสั่งพิมพ์ของ Browser
-- Export Excel เป็นไฟล์ `.xls`
-- รองรับ Export PDF และ Export Excel ตามข้อกำหนด
+- Export ที่รองรับ: PDF และ Excel
+- ไม่มี Export CSV และ Export JSON ตามข้อกำหนด
 
 ## วิธีอัปโหลดขึ้น GitHub Pages
 
 1. แตกไฟล์ ZIP นี้
-2. สร้าง Repository ชื่อ `nan-development`
-3. อัปโหลดไฟล์ทั้งหมดขึ้น Repository
+2. สร้าง Repository ใหม่ชื่อ `nan-development`
+3. อัปโหลดไฟล์ทั้งหมดในโฟลเดอร์นี้ขึ้น Repository
 4. ไปที่ Settings > Pages
-5. เลือก Branch: `main` และ Folder: `/root`
-6. กด Save
-7. เปิด URL ที่ GitHub Pages สร้างให้
+5. เลือก Deploy from branch
+6. เลือก branch `main` และ folder `/root`
+7. รอ GitHub สร้างลิงก์เว็บไซต์
 
-## ข้อมูลที่ใช้
+## โครงสร้างไฟล์
 
-- จำนวนโครงการ: 112 โครงการ
-- งบประมาณรวม: 1,067,920,919 บาท
-- แหล่งข้อมูล: Excel ที่ผู้ใช้อัปโหลดในระบบ ChatGPT
+```text
+nan-development/
+├── index.html
+├── assets/
+│   ├── app.js
+│   ├── style.css
+│   ├── logo-aiat.jpg
+│   └── logo-rmutl.png
+├── data/
+│   ├── projects.json
+│   ├── summary.json
+│   ├── sdgs.json
+│   └── province-plan.json
+└── .nojekyll
+```
 
-## ไฟล์สำคัญ
+## หมายเหตุ
 
-- `index.html` หน้า Dashboard หลัก
-- `assets/style.css` ไฟล์ตกแต่งหน้าเว็บ
-- `assets/app.js` ไฟล์ควบคุม Dashboard
-- `data/projects.json` ข้อมูลโครงการ
-- `data/summary.json` ข้อมูลสรุป
-- `data/sdgs.json` รายชื่อ SDGs
-- `assets/logo-aiat.jpg` โลโก้ AIAT
-- `assets/logo-rmutl.png` โลโก้ RMUTL
+ระบบนี้เป็น Static Web Application ใช้งานได้บน GitHub Pages โดยไม่ต้องติดตั้ง Server
