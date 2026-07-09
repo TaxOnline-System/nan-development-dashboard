@@ -1,43 +1,30 @@
-# nan-development
+# Provincial Project Alignment Dashboard (PPAD)
 
-ระบบ Dashboard สำหรับติดตามและวิเคราะห์ความสอดคล้องของโครงการจังหวัดน่านกับแผนพัฒนาจังหวัดและ SDGs
+ระบบ Dashboard สำหรับวิเคราะห์ความสอดคล้องของโครงการกับแผนพัฒนาจังหวัดน่านและ SDGs
 
-## ข้อมูลในระบบ
-
-- จำนวนโครงการ: 112 รายการ
-- งบประมาณรวม: 1,067,920,918.84 บาท
-- แบ่งกลุ่ม: สังคม, ท่องเที่ยว, ทรัพยากร, การค้า, เกษตร
-- Export ที่รองรับ: PDF และ Excel
-- ไม่มี Export CSV และ Export JSON ตามข้อกำหนด
-
-## วิธีอัปโหลดขึ้น GitHub Pages
+## วิธีใช้งานบน GitHub Pages
 
 1. แตกไฟล์ ZIP นี้
-2. สร้าง Repository ใหม่ชื่อ `nan-development`
-3. อัปโหลดไฟล์ทั้งหมดในโฟลเดอร์นี้ขึ้น Repository
-4. ไปที่ Settings > Pages
-5. เลือก Deploy from branch
-6. เลือก branch `main` และ folder `/root`
-7. รอ GitHub สร้างลิงก์เว็บไซต์
+2. อัปโหลดไฟล์ทั้งหมดขึ้น GitHub Repository
+3. ไปที่ Settings > Pages
+4. เลือก Deploy from branch
+5. เลือก branch `main` และ folder `/root`
+6. กด Save
+7. เปิด URL ที่ GitHub Pages สร้างให้
 
-## โครงสร้างไฟล์
+## ไฟล์สำคัญ
 
-```text
-nan-development/
-├── index.html
-├── assets/
-│   ├── app.js
-│   ├── style.css
-│   ├── logo-aiat.jpg
-│   └── logo-rmutl.png
-├── data/
-│   ├── projects.json
-│   ├── summary.json
-│   ├── sdgs.json
-│   └── province-plan.json
-└── .nojekyll
-```
+- `index.html` หน้าเว็บหลัก
+- `assets/style.css` รูปแบบหน้าจอ
+- `assets/app.js` ระบบค้นหา กรอง Dashboard และ Export
+- `data/projects.json` ข้อมูลโครงการจาก Excel
+- `data/sdgs.json` รายการ SDGs
+- `data/province-plan.json` ข้อมูลแผนจังหวัดจาก Sheet แผนปี 71-75
+
+## การอัปเดตข้อมูล
+
+แก้ไขไฟล์ `data/projects.json` หรือแปลง Excel ใหม่ให้เป็น JSON แล้วแทนที่ไฟล์เดิม จากนั้น commit/push ขึ้น GitHub
 
 ## หมายเหตุ
 
-ระบบนี้เป็น Static Web Application ใช้งานได้บน GitHub Pages โดยไม่ต้องติดตั้ง Server
+เวอร์ชันนี้เป็น Static Dashboard ใช้งานได้ทันทีบน GitHub Pages โดยไม่ต้องติดตั้ง Node.js และไม่ต้องมี Database
