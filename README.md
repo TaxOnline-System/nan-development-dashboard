@@ -1,11 +1,30 @@
-# Dashboard วิเคราะห์โครงการท่องเที่ยวจังหวัดน่าน
+# Provincial Project Alignment Dashboard (PPAD)
 
-ใช้เผยแพร่ผ่าน GitHub Pages
+ระบบ Dashboard สำหรับวิเคราะห์ความสอดคล้องของโครงการกับแผนพัฒนาจังหวัดน่านและ SDGs
 
-## วิธีอัปขึ้น GitHub Pages
-1. สร้าง Repository ใหม่ใน GitHub
-2. อัปโหลดไฟล์ `index.html`, `data.csv`, `data.json`, `README.md`
+## วิธีใช้งานบน GitHub Pages
+
+1. แตกไฟล์ ZIP นี้
+2. อัปโหลดไฟล์ทั้งหมดขึ้น GitHub Repository
 3. ไปที่ Settings > Pages
-4. Source เลือก Deploy from a branch
-5. Branch เลือก `main` และ `/root` แล้วกด Save
-6. รอ GitHub สร้างลิงก์เว็บไซต์
+4. เลือก Deploy from branch
+5. เลือก branch `main` และ folder `/root`
+6. กด Save
+7. เปิด URL ที่ GitHub Pages สร้างให้
+
+## ไฟล์สำคัญ
+
+- `index.html` หน้าเว็บหลัก
+- `assets/style.css` รูปแบบหน้าจอ
+- `assets/app.js` ระบบค้นหา กรอง Dashboard และ Export
+- `data/projects.json` ข้อมูลโครงการจาก Excel
+- `data/sdgs.json` รายการ SDGs
+- `data/province-plan.json` ข้อมูลแผนจังหวัดจาก Sheet แผนปี 71-75
+
+## การอัปเดตข้อมูล
+
+แก้ไขไฟล์ `data/projects.json` หรือแปลง Excel ใหม่ให้เป็น JSON แล้วแทนที่ไฟล์เดิม จากนั้น commit/push ขึ้น GitHub
+
+## หมายเหตุ
+
+เวอร์ชันนี้เป็น Static Dashboard ใช้งานได้ทันทีบน GitHub Pages โดยไม่ต้องติดตั้ง Node.js และไม่ต้องมี Database
