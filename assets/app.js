@@ -15,7 +15,7 @@ function extractSdgs(v){return [...new Set((String(v||'').match(/(?:sdg\s*)?(1[0
 function hasAny(text, words){text=String(text||'').toLowerCase();return words.some(w=>text.includes(w.toLowerCase()));}
 function levelClass(a){a=String(a||'');if(a.includes('สูง'))return 'level-high';if(a.includes('ต่ำ')||a.includes('ปรับปรุง'))return 'level-low';if(a.includes('ปานกลาง'))return 'level-mid';return 'level-none';}
 function sdgPills(s){return (s?.length?s:[]).map(x=>`<span class="pill">SDG ${x}</span>`).join('')||'<span class="pill">ไม่ระบุ</span>';}
-function normalizeCategory(v){const t=String(v||'').trim();if(/สังคม|คุณภาพชีวิต|การศึกษา|สุขภาพ/.test(t))return 'สังคม';if(/ท่อง/.test(t))return 'ท่องเที่ยว';if(/ทรัพ|สิ่งแวดล้อม|น้ำ|ป่า/.test(t))return 'ทรัพยากร';if(/ค้า|ลงทุน|บริการ|โลจิสติกส์/.test(t))return 'การค้า';if(/เกษตร|ปศุสัตว์|ประมง/.test(t))return 'เกษตร';return t||'ไม่ระบุกลุ่ม';}
+function normalizeCategory(v){const t=String(v||'').trim().toLowerCase();if(t==='social'||/สังคม|คุณภาพชีวิต|การศึกษา|สุขภาพ/.test(t))return 'สังคม';if(t==='tour'||/ท่อง/.test(t))return 'ท่องเที่ยว';if(t==='env'||/ทรัพ|สิ่งแวดล้อม|น้ำ|ป่า/.test(t))return 'ทรัพยากร';if(t==='trade'||/ค้า|ลงทุน|บริการ|โลจิสติกส์/.test(t))return 'การค้า';if(t==='agri'||/เกษตร|ปศุสัตว์|ประมง/.test(t))return 'เกษตร';return t||'ไม่ระบุกลุ่ม';}
 
 const FIELD_ALIASES = {
   sequence:['ลำดับ','ลำดับที่','no','number'], category:['กลุ่ม','กลุ่มโครงการ','หมวดหมู่','ประเภทโครงการ'],
@@ -50,7 +50,7 @@ function mapRows(rows, source){
     const sdgText=get('sdgText');
     return {
       id:`${source.id}-${get('sequence')||index+1}`, formId:source.id, formLabel:source.label, sheetName:source.sheetName,
-      sequence:get('sequence')||String(index+1), category:source.id==='j11'?normalizeCategory(get('category')):(get('category')||source.label),
+      sequence:get('sequence')||String(index+1), category:source.id==='j11'?normalizeCategory(get('category')||get('developmentIssue')):(get('category')||source.label),
       projectName:get('projectName'), developmentIssue:get('developmentIssue')||'ไม่พบข้อมูล', developmentApproach:get('developmentApproach')||'ไม่พบข้อมูล',
       plan:get('plan')||'ไม่พบข้อมูล', indicator:get('indicator')||'ไม่พบข้อมูล', agency:get('agency')||'ไม่พบข้อมูล',
       budgetText:get('budget'), budget:parseNumber(get('budget')), output:get('output')||'ไม่พบข้อมูล', outcome:get('outcome')||'ไม่พบข้อมูล',
