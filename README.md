@@ -1,67 +1,69 @@
-# Nan AI Project Dashboard
+# nan-development
 
-ระบบประกอบด้วย 3 ส่วน
-1. Google Sheets เป็นฐานข้อมูลหลัก
-2. Google Apps Script เป็น API และส่วนเรียก AI
-3. GitHub Pages เป็นหน้า Dashboard สาธารณะ/ภายในองค์กร
+Dashboard ติดตามความสอดคล้องโครงการจังหวัดน่านกับแผนพัฒนาจังหวัด ตัวชี้วัด แผนงานหลัก และ SDGs พร้อมดึงข้อมูลจาก Google Sheets โดยอัตโนมัติ
 
-## 1) เตรียม Google Sheet
-ใช้แถวที่ 1 เป็นชื่อคอลัมน์ และแต่ละโครงการอยู่ 1 แถว คอลัมน์ข้อมูลต้นทางที่แนะนำ:
-- ชื่อโครงการ
-- หน่วยงานรับผิดชอบ
-- ประเด็นการพัฒนา
-- แนวทางการพัฒนา
-- วัตถุประสงค์
-- กิจกรรม
-- ผลผลิต (Output)
-- ผลลัพธ์จากการดำเนินโครงการ (Outcome)
-- ตัวชี้วัดโครงการ
-- ค่าเป้าหมาย
-- กลุ่มเป้าหมาย
-- พื้นที่ดำเนินการ
-- งบประมาณรวม (บาท)
+## แหล่งข้อมูลที่ตั้งค่าไว้
 
-Apps Script จะเพิ่มคอลัมน์ผลวิเคราะห์ให้อัตโนมัติ
+- Spreadsheet ID: `15oinAJNrPYt3utkaJ9XszfsMkydKO5HBxtC7U-OOIm0`
+- Sheet GID: `1020842207`
+- รีเฟรชอัตโนมัติทุก 5 นาที และทุกครั้งที่ผู้ใช้กลับมาเปิดแท็บเว็บ
+- หาก Google Sheets เข้าถึงไม่ได้ ระบบจะใช้ `data/projects.json` เป็นข้อมูลสำรอง
 
-## 2) ติดตั้ง Apps Script
-1. เปิด Google Sheet > Extensions > Apps Script
-2. วางไฟล์ `apps-script/Code.gs`
-3. เปิด Project Settings และเพิ่ม Script Properties:
-   - `SPREADSHEET_ID` = `1x73TIgDGg736RPAUsx4JGYSjtclCRNQr72SdYS2_5Kw`
-   - `SHEET_NAME` = ชื่อแท็บข้อมูล เช่น `Sheet1` (เว้นว่างได้เพื่อใช้แท็บแรก)
-   - `AI_API_KEY` = API Key ของผู้ให้บริการ AI
-   - `AI_API_URL` = URL แบบ OpenAI-compatible chat completions
-   - `AI_MODEL` = ชื่อโมเดลที่บัญชีของท่านใช้งานได้
-4. Deploy > New deployment > Web app
-   - Execute as: Me
-   - Who has access: Anyone หรือ Anyone within organization ตามนโยบายข้อมูล
-5. คัดลอก Web App URL
-6. Triggers > Add Trigger
-   - Function: `onEditInstalled`
-   - Event source: From spreadsheet
-   - Event type: On edit
+## ตั้งค่าสิทธิ์ Google Sheets
 
-> การวิเคราะห์หลังแก้ไขจะเกิดในระดับประมาณไม่กี่วินาทีถึงหนึ่งนาที ขึ้นกับ AI API และโควตา ไม่ใช่การคำนวณในเบราว์เซอร์โดยตรง
+เพื่อให้ GitHub Pages อ่านข้อมูลได้ ให้ตั้งค่าไฟล์ Google Sheets อย่างใดอย่างหนึ่ง:
 
-## 3) ตั้งค่า GitHub Pages
-1. แก้ `config.js` และใส่ Web App URL ใน `API_URL`
-2. อัปโหลดไฟล์ทั้งหมด ยกเว้นโฟลเดอร์ `apps-script` ก็ได้ ไปยัง GitHub repository
-3. Settings > Pages > Deploy from a branch > main / root
-4. เปิด URL ของ GitHub Pages
+1. กด **Share** แล้วตั้ง General access เป็น **Anyone with the link – Viewer**
+2. หรือใช้ **File > Share > Publish to web** แล้วเผยแพร่ชีตที่ต้องการ
 
-## 4) หลักการอัปเดตแบบอัตโนมัติ
-- เมื่อแก้เซลล์ในแถวโครงการ `onEditInstalled` จะวิเคราะห์แถวนั้นใหม่
-- ระบบสร้าง SHA-256 Hash จากข้อมูลต้นทาง หากข้อมูลไม่เปลี่ยนจะไม่เรียก AI ซ้ำ
-- Dashboard ดึงข้อมูลใหม่ทุก 30 วินาที ปรับได้ใน `config.js`
+ห้ามใส่ข้อมูลส่วนบุคคลหรือข้อมูลลับในชีตที่เปิดเป็นสาธารณะ
 
-## 5) ความปลอดภัย
-- ห้ามใส่ AI API Key ใน `config.js`, `app.js` หรือ GitHub
-- เก็บ API Key ใน Apps Script Properties เท่านั้น
-- หากข้อมูลโครงการเป็นข้อมูลภายใน ให้จำกัด Web App เป็นผู้ใช้ในองค์กร และเพิ่มระบบล็อกอินก่อนเผยแพร่ Dashboard
-- GitHub Pages เหมาะกับข้อมูลที่เปิดเผยได้ หากข้อมูลอ่อนไหวควรใช้ Hosting ที่รองรับ Authentication
+## หัวคอลัมน์ที่ระบบรองรับ
 
-## 6) ข้อเสนอแนะด้านคุณภาพการวิเคราะห์
-- บังคับให้ 1 โครงการ = 1 แถว
-- ห้ามรวมหลายโครงการในเซลล์เดียว
-- กรอก Output, Outcome, ตัวชี้วัด และค่าเป้าหมายให้วัดผลได้
-- ให้เจ้าหน้าที่ตรวจรับรองผล AI ก่อนนำไปใช้ประกอบการตัดสินใจงบประมาณ
+ระบบรองรับชื่อหัวตารางทั้งแบบไทยและอังกฤษ โดยหัวข้อหลักที่แนะนำคือ:
+
+| หัวคอลัมน์ |
+|---|
+| ลำดับ |
+| กลุ่ม |
+| ชื่อโครงการ |
+| หน่วยงานรับผิดชอบ |
+| ประเด็นการพัฒนา |
+| แนวทางการพัฒนา |
+| แผนงานหลัก |
+| ตัวชี้วัด |
+| งบประมาณรวม (บาท) |
+| ผลผลิต (Output) |
+| ผลลัพธ์ (Outcome) |
+| SDGs ที่สอดคล้อง |
+| คำอธิบาย SDGs & Keyword |
+| ระดับความสอดคล้อง |
+| เหตุผล / ผลการวิเคราะห์ |
+| เกณฑ์ที่ใช้ประเมิน |
+| ข้อเสนอแนะ |
+
+หัวตารางต้องอยู่แถวแรกของชีต และหนึ่งโครงการต่อหนึ่งแถว
+
+## เปลี่ยน Spreadsheet หรือ Sheet
+
+แก้ไฟล์ `assets/config.js`
+
+```js
+window.NAN_DEVELOPMENT_CONFIG = {
+  spreadsheetId: 'SPREADSHEET_ID',
+  sheetGid: 'SHEET_GID',
+  refreshIntervalMs: 300000,
+  localFallbackUrl: 'data/projects.json'
+};
+```
+
+## อัปโหลดขึ้น GitHub Pages
+
+1. แตกไฟล์ ZIP
+2. อัปโหลดไฟล์ทั้งหมดภายในโฟลเดอร์ `nan-development` ไปยัง repository
+3. เปิด **Settings > Pages**
+4. เลือก **Deploy from a branch**
+5. เลือก branch `main` และโฟลเดอร์ `/root`
+6. กด Save
+
+หลังจากแก้ข้อมูลใน Google Sheets หน้าเว็บจะดึงข้อมูลใหม่โดยอัตโนมัติ ไม่ต้องอัปโหลด ZIP ใหม่
