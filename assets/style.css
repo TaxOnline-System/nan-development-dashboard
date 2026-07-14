@@ -3,3 +3,11 @@
 
 /* กรอบย่อยภายในส่วนความเชื่อมโยงกับแผนพัฒนาจังหวัด */
 .plan-group{display:flex;flex-direction:column;gap:12px;margin-top:12px}.plan-box{background:#fff;border:1px solid #cbd5e1;border-radius:12px;padding:14px 16px;box-shadow:0 2px 8px rgba(15,23,42,.04)}.plan-box-title{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding-bottom:7px;border-bottom:1px solid #e2e8f0;color:#1d4ed8;font-size:14px;font-weight:800;line-height:1.4}.plan-box-content{color:#334155;font-size:14px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}.plan-box.issue{border-left:5px solid #2563eb}.plan-box.approach{border-left:5px solid #0ea5e9}.plan-box.main-plan{border-left:5px solid #8b5cf6}.plan-box.indicator{border-left:5px solid #f59e0b}.plan-box.criteria-box{border-left:5px solid #16a34a;background:#f8fffb}.plan-box-content.no-data{color:#b45309;font-weight:700;background:#fffbeb;border:1px dashed #fcd34d;border-radius:8px;padding:10px 12px}.detail-card.criteria{border-color:#bfdbfe;background:#eff6ff;padding:18px}.detail-card.criteria>h4{margin:0 0 14px;color:#0f172a;font-size:18px;font-weight:800}@media(max-width:760px){.plan-group{gap:10px}.plan-box{padding:12px 13px}.plan-box-title{font-size:13.5px}.plan-box-content{font-size:13.5px;line-height:1.7}}
+
+/* ข้อมูลที่สอดคล้องกับแผนจังหวัด */
+.aligned-data-card{border-color:#c7d2fe;background:#fafaff}
+.aligned-data-list{display:flex;flex-direction:column;gap:10px}
+.aligned-data-item{border:1px solid #dbe4f0;border-left:4px solid #4f46e5;border-radius:11px;background:#fff;padding:11px 13px}
+.aligned-data-item strong{display:block;color:#3730a3;font-size:13px;margin-bottom:5px}
+.aligned-data-item p{margin:0!important;color:#334155!important;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:760px){.aligned-data-item{padding:10px 11px}.aligned-data-item strong,.aligned-data-item p{font-size:13px}}
