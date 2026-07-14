@@ -96,7 +96,10 @@ async function loadProjects(){
   results.forEach((r,i)=>{const s=CONFIG.dataSources[i];if(r.status==='fulfilled'){all.push(...r.value.projects);state.sourceStatus.push(`${s.label}: ${r.value.projects.length} โครงการ`);}else{state.sourceStatus.push(`${s.label}: โหลดไม่สำเร็จ`);console.warn(s.sheetName,r.reason);}});
   if(!all.length){all=await fetchLocal();state.sourceStatus.push('ใช้ข้อมูลสำรอง');}
   const total=sum(all,p=>p.budget); all.forEach(p=>p.budgetPercent=total?p.budget/total*100:0);
-  $('dataStatus').textContent=`อัปเดต ${new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})} • ${state.sourceStatus.join(' • ')}`;
+  const now=new Date();
+  const updateDate=now.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
+  const updateTime=now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  $('dataStatus').textContent=`อัปเดต ${updateDate} เวลา ${updateTime} น. • ${state.sourceStatus.join(' • ')}`;
   $('dataStatus').title=state.sourceStatus.join('\n');
   return all;
 }
