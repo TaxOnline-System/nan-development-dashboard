@@ -25,18 +25,24 @@ const FIELD_ALIASES = {
   agency:['หน่วยงานรับผิดชอบ','หน่วยงานเจ้าของโครงการ','หน่วยงาน'],
   budget:['งบประมาณรวมบาท','งบประมาณรวม','งบประมาณปี2571บาท','งบประมาณบาท','งบประมาณ'],
   output:['ผลผลิตoutput','ผลผลิต','output'], outcome:['ผลลัพธ์จากการดำเนินโครงการoutcome','ผลลัพธ์outcome','ผลลัพธ์','outcome'],
-  sdgText:['sdgsที่สอดคล้อง','sdgs','sdg'],sdgKeyword:[
-  'คำอธิบายsdgsและkeyword',
-  'คำอธิบายsdgskeyword',
-  'keywordsdg',
-  'คำอธิบายsdgs',
-  'keyword'
-],
+  sdgText:['sdgsที่สอดคล้อง','sdgs','sdg'], sdgKeyword:['คำอธิบายsdgsและkeyword','คำอธิบายsdgskeyword','keywordsdg','คำอธิบายsdgs','keyword'],
   alignment:['ระดับความสอดคล้องกับแผนปี7175','ระดับความสอดคล้อง','ความสอดคล้อง'],
   assessment:['จากการประเมินว่าสอดคล้องกับแผนงานตัวชี้วัดและค่าเป้าหมายเป้าหมายการพัฒนาจังหวัด5ปีหรือไม่','เหตุผล','ผลการวิเคราะห์','จากการประเมิน'],
   criteria:['เกณฑ์ที่ใช้ประเมินกับแผนปี7175','เกณฑ์การประเมิน','เกณฑ์'],
   suggestion:['วิธีการแก้ไขข้อเสนอแนะเพื่อเพิ่มความสอดคล้อง','ข้อเสนอแนะ','แนวทางปรับปรุง']
 };
+
+
+const PROVINCIAL_GOALS = {
+  '1': 'ส่งเสริมและพัฒนาทรัพยากรมนุษย์ทุกช่วงวัยให้มีคุณภาพ พร้อมสำหรับการดำรงชีวิตในศตวรรษที่ 21',
+  '2': 'ยกระดับการผลิต ภาคอุตสาหกรรม การท่องเที่ยว และการบริการ ให้จังหวัดน่านเป็นเมืองเป้าหมายด้านการลงทุน การค้าชายแดน และการค้าผ่านแดน โดยอาศัยเครือข่ายความร่วมมือจากทุกภาคส่วนและนวัตกรรมที่สอดคล้องกับบริบทของการเปลี่ยนแปลง',
+  '3': 'ส่งเสริมการพัฒนาในทุกมิติ เพื่อให้เกิดการเติบโตที่เป็นมิตรต่อสิ่งแวดล้อม'
+};
+function planDescription(value){
+  const raw=String(value||'').trim();
+  const key=(raw.match(/^([123])(?:\.0+)?$/)||[])[1];
+  return key&&PROVINCIAL_GOALS[key]?`${key} ${PROVINCIAL_GOALS[key]}`:(raw||'ไม่พบข้อมูล');
+}
 
 function gvizUrl(source){
   const id=encodeURIComponent(CONFIG.spreadsheetId);
@@ -58,7 +64,7 @@ function mapRows(rows, source){
       id:`${source.id}-${get('sequence')||index+1}`, formId:source.id, formLabel:source.label, sheetName:source.sheetName,
       sequence:get('sequence')||String(index+1), category:source.id==='j11'?normalizeCategory(get('category')||get('developmentIssue')):(get('category')||source.label),
       projectName:get('projectName'), developmentIssue:get('developmentIssue')||'ไม่พบข้อมูล', developmentApproach:get('developmentApproach')||'ไม่พบข้อมูล',
-      plan:get('plan')||'ไม่พบข้อมูล', indicator:get('indicator')||'ไม่พบข้อมูล', agency:get('agency')||'ไม่พบข้อมูล',
+      plan:planDescription(get('plan')), indicator:get('indicator')||'ไม่พบข้อมูล', agency:get('agency')||'ไม่พบข้อมูล',
       budgetText:get('budget'), budget:parseNumber(get('budget')), output:get('output')||'ไม่พบข้อมูล', outcome:get('outcome')||'ไม่พบข้อมูล',
       sdgText, sdgs:extractSdgs(sdgText), sdgKeyword:get('sdgKeyword')||'ไม่พบข้อมูล', alignment:get('alignment')||'ไม่ระบุ',
       assessment:get('assessment')||'ไม่พบข้อมูล', criteria:get('criteria')||'ไม่พบข้อมูล',
@@ -77,7 +83,7 @@ async function fetchLocal(){
   const r=await fetch(`${CONFIG.localFallbackUrl||'data/projects.json'}?t=${Date.now()}`,{cache:'no-store'});
   if(!r.ok)throw new Error('โหลดข้อมูลสำรองไม่สำเร็จ');
   const data=await r.json();
-  return data.map((p,i)=>({...p,id:`local-${p.id||i+1}`,formId:'j11',formLabel:'จ.1-1',sheetName:'ข้อมูลสำรอง',category:normalizeCategory(p.category),sdgs:p.sdgs||extractSdgs(p.sdgText),budget:Number(p.budget||0)}));
+  return data.map((p,i)=>({...p,id:`local-${p.id||i+1}`,formId:'j11',formLabel:'จ.1-1',sheetName:'ข้อมูลสำรอง',category:normalizeCategory(p.category),plan:planDescription(p.plan),sdgs:p.sdgs||extractSdgs(p.sdgText),budget:Number(p.budget||0)}));
 }
 async function loadProjects(){
   $('dataStatus').textContent='กำลังโหลดข้อมูลล่าสุดจาก Google Sheets…';
