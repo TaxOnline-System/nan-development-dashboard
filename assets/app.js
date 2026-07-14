@@ -27,9 +27,9 @@ const FIELD_ALIASES = {
   output:['ผลผลิตoutput','ผลผลิต','output'], outcome:['ผลลัพธ์จากการดำเนินโครงการoutcome','ผลลัพธ์outcome','ผลลัพธ์','outcome'],
   sdgText:['sdgsที่สอดคล้อง','sdgs','sdg'], sdgKeyword:['คำอธิบายsdgsและkeyword','คำอธิบายsdgskeyword','keywordsdg','คำอธิบายsdgs','keyword'],
   alignment:['ระดับความสอดคล้องกับแผนปี7175','ระดับความสอดคล้อง','ความสอดคล้อง'],
-  assessment:['จากการประเมินว่าสอดคล้องกับแผนงานตัวชี้วัดและค่าเป้าหมายเป้าหมายการพัฒนาจังหวัด5ปีหรือไม่','เหตุผล','ผลการวิเคราะห์','จากการประเมิน'],
-  criteria:['เกณฑ์ที่ใช้ประเมินกับแผนปี25712575','เกณฑ์ที่ใช้ประเมินกับแผนปี7175','เกณฑ์ที่ใช้ประเมินกับแผน25712575','เกณฑ์การประเมิน','เกณฑ์'],
-  suggestion:['วิธีการแก้ไขข้อเสนอแนะเพื่อเพิ่มความสอดคล้อง','ข้อเสนอแนะ','แนวทางปรับปรุง']
+  assessment:['ผลการประเมินความสอดคล้อง','จากการประเมินว่าสอดคล้องกับแผนงานตัวชี้วัดและค่าเป้าหมายเป้าหมายการพัฒนาจังหวัด5ปีหรือไม่','เหตุผลการประเมิน','เหตุผล','ผลการวิเคราะห์','จากการประเมิน'],
+  criteria:['เกณฑ์ที่ใช้ประเมินกับแผนปี25712575','เกณฑ์ที่ใช้ประเมินกับแผนปี7175','เกณฑ์การประเมิน','เกณฑ์'],
+  suggestion:['วิธีการแก้ไขและข้อเสนอแนะ','วิธีการแก้ไขข้อเสนอแนะเพื่อเพิ่มความสอดคล้อง','ข้อเสนอแนะหลัก','ข้อเสนอแนะ','แนวทางปรับปรุง']
 };
 
 
@@ -63,12 +63,12 @@ function mapRows(rows, source){
     return {
       id:`${source.id}-${get('sequence')||index+1}`, formId:source.id, formLabel:source.label, sheetName:source.sheetName,
       sequence:get('sequence')||String(index+1), category:source.id==='j11'?normalizeCategory(get('category')||get('developmentIssue')):(get('category')||source.label),
-      projectName:get('projectName'), developmentIssue:normalizeCategory(get('developmentIssue'))||'ไม่พบข้อมูล', developmentApproach:get('developmentApproach')||'ไม่พบข้อมูล',
+      projectName:get('projectName'), developmentIssue:source.id==='j11'?normalizeCategory(get('developmentIssue')):(get('developmentIssue')||'ไม่พบข้อมูล'), developmentApproach:get('developmentApproach')||'ไม่พบข้อมูล',
       plan:planDescription(get('plan')), indicator:get('indicator')||'ไม่พบข้อมูล', agency:get('agency')||'ไม่พบข้อมูล',
       budgetText:get('budget'), budget:parseNumber(get('budget')), output:get('output')||'ไม่พบข้อมูล', outcome:get('outcome')||'ไม่พบข้อมูล',
       sdgText, sdgs:extractSdgs(sdgText), sdgKeyword:get('sdgKeyword')||'ไม่พบข้อมูล', alignment:get('alignment')||'ไม่ระบุ',
-      assessment:get('assessment')||'ไม่พบข้อมูล', criteria:get('criteria')||'ไม่พบข้อมูล',
-      suggestion:get('suggestion')||'ควรเพิ่มตัวชี้วัดเชิงปริมาณ ค่าเป้าหมาย ผู้ได้รับประโยชน์ วิธีติดตามผล และเหตุผลเชื่อมโยง SDGs ให้ชัดเจน'
+      assessment:get('assessment')||'ไม่พบข้อมูล\n(อยู่ระหว่างการวิเคราะห์ข้อมูล)', criteria:get('criteria')||'ไม่พบข้อมูล',
+      suggestion:get('suggestion')||'ไม่พบข้อมูล\n(อยู่ระหว่างการวิเคราะห์ข้อมูล)'
     };
   }).filter(p=>p.projectName);
 }
